@@ -1,27 +1,23 @@
 /// =============================================================================
 /// Chat Screen - Main Learning Interface
 /// =============================================================================
-/// 🔄 MAJOR UPDATE:
-/// ✅ TTS auto-start (Learno speaks)
-/// ✅ STT integration (child speaks)
-/// ✅ Voice/Text mode toggle
-/// ✅ Image display from AI
-/// ✅ Progress bar with concepts
-/// ✅ Student level indicator
-/// ✅ Continue teaching flow
-/// ✅ Silence detection
+/// Updates in this version:
+/// - Sequential message display via MessageQueue
+/// - Animated three-dot typing indicator (brand colors)
+/// - Fade-in animation per Learno message bubble
+/// - TTS + queue coordination (both must finish before next step)
+/// - Image placed at correct position within message sequence
 /// =============================================================================
 
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../core/session_state.dart';
 import '../api/api_service.dart';
 import '../api/api_config.dart';
 import '../api/dto.dart';
-import '../models/enums.dart';
-import '../services/tts_service.dart';
-import '../services/stt_service.dart';
+import '../models/message_queue.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -32,35 +28,50 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   // Services
-  final TTSService _tts = TTSService();
-  final STTService _stt = STTService();
+  final _tts = TTSService();
+  final _stt = STTService();
 
   // Controllers
-  final TextEditingController _textController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
+  final _textController = TextEditingController();
+  final _scrollController = ScrollController();
 
-  // State
+  // Message list
   final List<_ChatMessageUI> _messages = [];
+
+  // Core state flags
   bool _isLoading = false;
   bool _sessionStarted = false;
   bool _silenceHandled = false;
   String? _errorMessage;
-
-  // Current response type (to determine if question)
   String _currentResponseType = '';
   bool _waitingForAnswer = false;
-
-  // Silence timer
-  Timer? _silenceTimer;
-  int _silenceSeconds = 0;
 
   // Voice state
   bool _isVoiceMode = true;
   bool _isSpeaking = false;
   bool _isListening = false;
 
+  // Sequential display state
+  MessageQueue? _currentQueue;
+  bool _showTypingIndicator = false;
+
+  // Coordination: both TTS and queue must finish before advancing
+  bool _ttsDone = false;
+  bool _queueDone = false;
+
+  // Silence timer
+  Timer? _silenceTimer;
+  int _silenceSeconds = 0;
+
   // Progress
   ProgressData? _progress;
+
+  // Whether user input should be blocked
+  bool get _inputBlocked => _isLoading || (_currentQueue?.isRunning ?? false);
+
+  // =========================================================================
+  // LIFECYCLE
+  // =========================================================================
 
   @override
   void initState() {
@@ -74,46 +85,42 @@ class _ChatScreenState extends State<ChatScreen> {
     _textController.dispose();
     _scrollController.dispose();
     _silenceTimer?.cancel();
+    _currentQueue?.cancel();
     _tts.dispose();
     _stt.dispose();
     super.dispose();
   }
 
-  // ===========================================================================
-  // INITIALIZATION
-  // ===========================================================================
+  // =========================================================================
+  // SERVICE INITIALISATION
+  // =========================================================================
 
   Future<void> _initServices() async {
-    // Initialize TTS
     await _tts.init();
     _tts.onStart = () => setState(() => _isSpeaking = true);
     _tts.onComplete = () {
       setState(() => _isSpeaking = false);
-      _handleTTSComplete();
+      _ttsDone = true;
+      _checkBothComplete();
     };
     _tts.onError = (error) {
       setState(() => _isSpeaking = false);
-      print('TTS Error: $error');
+      _ttsDone = true;
+      _checkBothComplete();
     };
 
-    // Initialize STT
-    await _stt.init();
-    _stt.onResult = (text, isFinal) {
-      if (isFinal && text.isNotEmpty) {
-        _sendMessage(text, isVoice: true);
-      }
+    await _sst.init();
+    _sst.onResult = (text, isFinal) {
+      if (isFinal && text.isNotEmpty) _sendMessage(text, isVoice: true);
     };
-    _stt.onListeningStarted = () => setState(() => _isListening = true);
-    _stt.onListeningStopped = () => setState(() => _isListening = false);
-    _stt.onError = (error) {
-      setState(() => _isListening = false);
-      print('STT Error: $error');
-    };
+    _sst.onListeningStarted = () => setState(() => _isListening = true);
+    _sst.onListeningStopped = () => setState(() => _isListening = false);
+    _sst.onError = (error) => setState(() => _isListening = false);
   }
 
-  // ===========================================================================
+  // =========================================================================
   // SESSION START
-  // ===========================================================================
+  // =========================================================================
 
   Future<void> _startSession() async {
     if (_sessionStarted) return;
@@ -127,40 +134,21 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       final response = await ApiService.startSession();
-      final learnoMessage = response.learnoResponse;
 
-      // Add message
-      _addLearnoMessage(learnoMessage);
-
-      // Update progress
       if (response.progress != null) {
         _progress = response.progress;
         SessionState.updateProgress(response.progress!);
       }
-
-      // Update analytics
       if (response.analytics != null) {
         SessionState.updateAnalytics(response.analytics);
       }
 
       setState(() => _isLoading = false);
 
-      // Determine response type
-      _currentResponseType = learnoMessage.responseType;
+      _currentResponseType = response.learnoResponse.responseType;
       _waitingForAnswer = _isQuestionType(_currentResponseType);
 
-      // 🎧 AUTO-START VOICE
-      if (_isVoiceMode) {
-        await _tts.speak(learnoMessage.text);
-      } else {
-        // If not voice mode, continue teaching immediately if not question
-        if (!_waitingForAnswer) {
-          _continueTeaching();
-        } else {
-          _startSilenceTimer();
-        }
-      }
-
+      _enqueueResponse(response.learnoResponse);
       _scrollToBottom();
     } catch (e) {
       setState(() {
@@ -171,41 +159,109 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  // ===========================================================================
-  // HANDLE TTS COMPLETE
-  // ===========================================================================
+  // =========================================================================
+  // SEQUENTIAL MESSAGE DISPLAY
+  // =========================================================================
 
-  void _handleTTSComplete() {
-    // After TTS finishes speaking...
+  /// Enqueues a [LearnoResponse] for sequential chunk display.
+  ///
+  /// - Shows typing indicator before each chunk.
+  /// - Delivers chunks one-by-one with their individual delays.
+  /// - Attaches the image to the chunk at [response.imagePosition].
+  /// - Coordinates with TTS so the next step only fires when BOTH are done.
+  void _enqueueResponse(LearnoResponse response) {
+    // Cancel any in-flight queue.
+    _currentQueue?.cancel();
+    _currentQueue = null;
+
+    // Record full text in session state once (not per chunk).
+    SessionState.addLearnoMessage(
+      response.text,
+      response.responseType,
+      imageUrl: response.displayImageUrl,
+    );
+
+    // Determine chunk list — fall back to single chunk if no splitting data.
+    final chunks = response.hasMessages
+        ? response.messages
+            .map((m) => QueuedChunk(text: m.text, delayMs: m.delayMs))
+            .toList()
+        : [QueuedChunk(text: response.text, delayMs: 0)];
+
+    final imageUrl = response.displayImageUrl;
+    final imagePos = response.imagePosition;
+
+    // In text mode TTS never fires, so pre-mark it done.
+    _ttsDone = !_isVoiceMode;
+    _queueDone = false;
+
+    setState(() => _showTypingIndicator = true);
+
+    _currentQueue = MessageQueue(
+      chunks: chunks,
+      onShowTypingIndicator: () {
+        if (mounted) setState(() => _showTypingIndicator = true);
+      },
+      onHideTypingIndicator: () {
+        if (mounted) setState(() => _showTypingIndicator = false);
+      },
+      onChunkReady: (text, index) {
+        if (!mounted) return;
+        setState(() {
+          _messages.add(_ChatMessageUI(
+            text: text,
+            isUser: false,
+            responseType: response.responseType,
+            // Attach image only to the chunk at imagePosition.
+            imageUrl:
+                (imageUrl != null && index == imagePos) ? imageUrl : null,
+          ));
+        });
+        _scrollToBottom();
+      },
+      onComplete: () {
+        _queueDone = true;
+        _checkBothComplete();
+      },
+    )..start();
+
+    // Start TTS with the full text as one continuous read (voice mode only).
+    if (_isVoiceMode) {
+      _tts.speak(response.text);
+    }
+  }
+
+  /// Called when both TTS and queue have finished.
+  void _checkBothComplete() {
+    if (!_ttsDone || !_queueDone) return;
+    _ttsDone = false;
+    _queueDone = false;
+    _handleAfterSequenceComplete();
+  }
+
+  void _handleAfterSequenceComplete() {
     if (_waitingForAnswer) {
-      // If this was a question, start listening or wait for input
       _startSilenceTimer();
-      if (_isVoiceMode) {
-        _startListening();
-      }
+      if (_isVoiceMode) _startListening();
     } else {
-      // If not a question, continue teaching
       _continueTeaching();
     }
   }
 
-  // ===========================================================================
+  // =========================================================================
   // CONTINUE TEACHING
-  // ===========================================================================
+  // =========================================================================
 
   Future<void> _continueTeaching() async {
     if (_isLoading || !SessionState.isActive) return;
-    if (_waitingForAnswer) return; // Don't continue if waiting for answer
+    if (_waitingForAnswer) return;
+    if (_currentQueue?.isRunning ?? false) return;
 
     setState(() => _isLoading = true);
 
     try {
       final response = await ApiService.continueLesson();
-      final learnoMessage = response.learnoResponse;
 
-      _addLearnoMessage(learnoMessage);
-
-      // Update progress
       if (response.progress != null) {
         _progress = response.progress;
         SessionState.updateProgress(response.progress!);
@@ -213,32 +269,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
       setState(() => _isLoading = false);
 
-      // Check if lesson complete
       if (response.isComplete) {
         _handleLessonComplete();
         return;
       }
 
-      // Update response type
-      _currentResponseType = learnoMessage.responseType;
+      _currentResponseType = response.learnoResponse.responseType;
       _waitingForAnswer = _isQuestionType(_currentResponseType);
 
-      // Speak the response
-      if (_isVoiceMode) {
-        await _tts.speak(learnoMessage.text);
-      } else {
-        if (!_waitingForAnswer) {
-          // Auto-continue after delay if not question
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted && !_waitingForAnswer) {
-              _continueTeaching();
-            }
-          });
-        } else {
-          _startSilenceTimer();
-        }
-      }
-
+      _enqueueResponse(response.learnoResponse);
       _scrollToBottom();
     } catch (e) {
       setState(() {
@@ -249,21 +288,26 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  // ===========================================================================
-  // SEND MESSAGE (Answer)
-  // ===========================================================================
+  // =========================================================================
+  // SEND MESSAGE (child's answer)
+  // =========================================================================
 
   Future<void> _sendMessage(String text, {bool isVoice = false}) async {
     if (text.trim().isEmpty) return;
 
-    // Stop TTS/STT
+    // Abort any in-flight queue and reset coordination flags.
+    _currentQueue?.cancel();
+    _currentQueue = null;
+    _showTypingIndicator = false;
+    _ttsDone = false;
+    _queueDone = false;
+
     if (_isSpeaking) await _tts.stop();
-    if (_isListening) await _stt.stopListening();
+    if (_isListening) await _sst.stopListening();
 
     _resetSilenceTimer();
     _silenceHandled = false;
 
-    // Add user message
     setState(() {
       _messages.add(_ChatMessageUI(
         text: text,
@@ -279,11 +323,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       final response = await ApiService.sendResponse(text);
-      final learnoMessage = response.learnoResponse;
 
-      _addLearnoMessage(learnoMessage);
-
-      // Update progress
       if (response.progress != null) {
         _progress = response.progress;
         SessionState.updateProgress(response.progress!);
@@ -291,31 +331,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
       setState(() => _isLoading = false);
 
-      // Check if complete
       if (response.isComplete) {
         _handleLessonComplete();
         return;
       }
 
-      // Update response type
-      _currentResponseType = learnoMessage.responseType;
+      _currentResponseType = response.learnoResponse.responseType;
       _waitingForAnswer = _isQuestionType(_currentResponseType);
 
-      // Speak
-      if (_isVoiceMode) {
-        await _tts.speak(learnoMessage.text);
-      } else {
-        if (!_waitingForAnswer) {
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted && !_waitingForAnswer) {
-              _continueTeaching();
-            }
-          });
-        } else {
-          _startSilenceTimer();
-        }
-      }
-
+      _enqueueResponse(response.learnoResponse);
       _scrollToBottom();
     } catch (e) {
       setState(() {
@@ -328,42 +352,37 @@ class _ChatScreenState extends State<ChatScreen> {
     _textController.clear();
   }
 
-  // ===========================================================================
+  // =========================================================================
   // VOICE CONTROLS
-  // ===========================================================================
+  // =========================================================================
 
   void _startListening() async {
     if (!_isVoiceMode || _isLoading || _isSpeaking) return;
-    await _stt.startListening();
+    await _sst.startListening();
   }
 
-  void _stopListening() async {
-    await _stt.stopListening();
-  }
+  void _stopListening() async => _sst.stopListening();
 
   void _toggleVoiceMode() {
     setState(() {
       _isVoiceMode = !_isVoiceMode;
       SessionState.isVoiceMode = _isVoiceMode;
     });
-
     if (!_isVoiceMode) {
       _tts.stop();
-      _stt.stopListening();
+      _sst.stopListening();
     }
   }
 
-  // ===========================================================================
+  // =========================================================================
   // SILENCE HANDLING
-  // ===========================================================================
+  // =========================================================================
 
   void _startSilenceTimer() {
     _silenceTimer?.cancel();
     _silenceSeconds = 0;
-
     _silenceTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _silenceSeconds++;
-
       if (_silenceSeconds >= ApiConfig.silenceThresholdSeconds &&
           !_silenceHandled) {
         _handleSilence();
@@ -379,12 +398,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _handleSilence() async {
     if (_isLoading || !SessionState.isActive || _silenceHandled) return;
-
     _silenceHandled = true;
 
     try {
       setState(() => _isLoading = true);
-
       final response = await ApiService.notifySilence(
         ApiConfig.silenceThresholdSeconds.toDouble(),
       );
@@ -395,27 +412,20 @@ class _ChatScreenState extends State<ChatScreen> {
         return;
       }
 
-      _addLearnoMessage(hint);
       setState(() => _isLoading = false);
+      _enqueueResponse(hint);
+      _scrollToBottom();
 
-      // Speak hint
-      if (_isVoiceMode) {
-        await _tts.speak(hint.text);
-      }
-
-      // Reset silence handling for next question
       _silenceHandled = false;
       _startSilenceTimer();
-
-      _scrollToBottom();
     } catch (_) {
       setState(() => _isLoading = false);
     }
   }
 
-  // ===========================================================================
+  // =========================================================================
   // HELPERS
-  // ===========================================================================
+  // =========================================================================
 
   bool _isQuestionType(String responseType) {
     const questionTypes = [
@@ -428,27 +438,10 @@ class _ChatScreenState extends State<ChatScreen> {
     return questionTypes.contains(responseType);
   }
 
-  void _addLearnoMessage(LearnoResponse response) {
-    setState(() {
-      _messages.add(_ChatMessageUI(
-        text: response.text,
-        isUser: false,
-        responseType: response.responseType,
-        imageUrl: response.generatedImageUrl,
-      ));
-    });
-
-    SessionState.addLearnoMessage(
-      response.text,
-      response.responseType,
-      imageUrl: response.generatedImageUrl,
-    );
-  }
-
   void _handleLessonComplete() {
     _silenceTimer?.cancel();
+    _currentQueue?.cancel();
     SessionState.isLessonComplete = true;
-
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) _showCompletionDialog();
     });
@@ -456,7 +449,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _showCompletionDialog() {
     final accuracy = SessionState.accuracyPercent * 100;
-
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -466,23 +458,18 @@ class _ChatScreenState extends State<ChatScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'You completed the lesson!',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18),
-            ),
+            const Text('You completed the lesson!',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18)),
             const SizedBox(height: 16),
-            Text(
-              '✅ ${SessionState.totalCorrect} correct answers',
-              style: const TextStyle(fontSize: 16),
-            ),
+            Text('✅ ${SessionState.totalCorrect} correct answers',
+                style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 8),
-            Text(
-              '📊 ${accuracy.toStringAsFixed(0)}% accuracy',
-              style: const TextStyle(fontSize: 16),
-            ),
+            Text('📊 ${accuracy.toStringAsFixed(0)}% accuracy',
+                style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 16),
-            const Text('⭐ You are a star! ⭐', style: TextStyle(fontSize: 20)),
+            const Text('⭐ You are a star! ⭐',
+                style: TextStyle(fontSize: 20)),
           ],
         ),
         actions: [
@@ -501,10 +488,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red[400],
-      ),
+      SnackBar(content: Text(message), backgroundColor: const Color(0xFF76310F)),
     );
   }
 
@@ -520,9 +504,9 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  // ===========================================================================
-  // BUILD UI
-  // ===========================================================================
+  // =========================================================================
+  // BUILD
+  // =========================================================================
 
   @override
   Widget build(BuildContext context) {
@@ -530,14 +514,10 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: _buildAppBar(),
       body: Stack(
         children: [
-          // Background
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/chat_background.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/chat_background.png',
+                fit: BoxFit.cover),
           ),
-          // Content
           SafeArea(
             child: Column(
               children: [
@@ -558,7 +538,6 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: const Color(0xFFFF8D00),
       foregroundColor: Colors.white,
       actions: [
-        // Student level indicator
         if (_progress != null)
           Container(
             margin: const EdgeInsets.only(right: 8),
@@ -570,20 +549,15 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  _getLevelIcon(SessionState.learningLevel),
-                  size: 16,
-                  color: Colors.white,
-                ),
+                Icon(_getLevelIcon(SessionState.learningLevel),
+                    size: 16, color: Colors.white),
                 const SizedBox(width: 4),
-                Text(
-                  _getLevelText(SessionState.learningLevel),
-                  style: const TextStyle(fontSize: 12, color: Colors.white),
-                ),
+                Text(_getLevelText(SessionState.learningLevel),
+                    style:
+                        const TextStyle(fontSize: 12, color: Colors.white)),
               ],
             ),
           ),
-        // Voice toggle
         IconButton(
           icon: Icon(_isVoiceMode ? Icons.mic : Icons.mic_off),
           onPressed: _toggleVoiceMode,
@@ -602,37 +576,29 @@ class _ChatScreenState extends State<ChatScreen> {
       color: Colors.white.withOpacity(0.95),
       child: Column(
         children: [
-          // Progress info
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Concept ${progress.currentConcept} of ${progress.totalConcepts}',
                 style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF44200B),
-                ),
+                    fontWeight: FontWeight.w600, color: Color(0xFF44200B)),
               ),
               Text(
                 '✅ ${progress.totalCorrect}  ❌ ${progress.totalWrong}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF44200B),
-                ),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF44200B)),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          // Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: progress.progressPercent,
               minHeight: 10,
               backgroundColor: Colors.grey[300],
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFFFF8D00),
-              ),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Color(0xFFFF8D00)),
             ),
           ),
         ],
@@ -641,13 +607,17 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessageList() {
+    final hasIndicator = _isLoading || _showTypingIndicator;
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
-      itemCount: _messages.length + (_isLoading ? 1 : 0),
+      itemCount: _messages.length + (hasIndicator ? 1 : 0),
       itemBuilder: (context, index) {
-        if (index == _messages.length && _isLoading) {
-          return _buildLoadingIndicator();
+        if (index >= _messages.length) {
+          // Show "Thinking…" while waiting for API, dots while queue is playing.
+          return _isLoading
+              ? _buildLoadingIndicator()
+              : const _TypingIndicator();
         }
         return _buildMessageBubble(_messages[index]);
       },
@@ -658,7 +628,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final isUser = msg.isUser;
     final maxWidth = MediaQuery.of(context).size.width * 0.75;
 
-    return Align(
+    Widget bubble = Align(
       alignment: isUser ? Alignment.centerLeft : Alignment.centerRight,
       child: Container(
         constraints: BoxConstraints(maxWidth: maxWidth),
@@ -667,15 +637,12 @@ class _ChatScreenState extends State<ChatScreen> {
           crossAxisAlignment:
               isUser ? CrossAxisAlignment.start : CrossAxisAlignment.end,
           children: [
-            // Image
             if (msg.imageUrl != null) _buildMessageImage(msg.imageUrl!),
-            // Text bubble
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isUser
-                    ? const Color(0xFFFFB876)
-                    : const Color(0xFFFFEDDC),
+                color:
+                    isUser ? const Color(0xFFFFB876) : const Color(0xFFFFEDDC),
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
@@ -698,6 +665,18 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
     );
+
+    // Fade-in animation for Learno messages only.
+    // ValueKey(msg.id) ensures each message animates exactly once.
+    if (isUser) return bubble;
+    return TweenAnimationBuilder<double>(
+      key: ValueKey(msg.id),
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 200),
+      builder: (context, opacity, child) =>
+          Opacity(opacity: opacity, child: child!),
+      child: bubble,
+    );
   }
 
   Widget _buildMessageImage(String imageUrl) {
@@ -707,10 +686,9 @@ class _ChatScreenState extends State<ChatScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: ClipRRect(
@@ -727,10 +705,8 @@ class _ChatScreenState extends State<ChatScreen> {
               height: 220,
               color: Colors.grey[200],
               child: const Center(
-                child: CircularProgressIndicator(
-                  color: Color(0xFFFF8D00),
-                ),
-              ),
+                  child: CircularProgressIndicator(
+                      color: Color(0xFFFF8D00))),
             );
           },
           errorBuilder: (_, __, ___) => Container(
@@ -744,6 +720,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  /// "Thinking…" indicator — shown while waiting for the backend API response.
   Widget _buildLoadingIndicator() {
     return Align(
       alignment: Alignment.centerRight,
@@ -761,12 +738,10 @@ class _ChatScreenState extends State<ChatScreen> {
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Color(0xFFFF8D00),
-              ),
+                  strokeWidth: 2, color: Color(0xFFFF8D00)),
             ),
             SizedBox(width: 10),
-            Text('Thinking...', style: TextStyle(color: Color(0xFF44200B))),
+            Text('Thinking…', style: TextStyle(color: Color(0xFF44200B))),
           ],
         ),
       ),
@@ -778,13 +753,15 @@ class _ChatScreenState extends State<ChatScreen> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Speaking/Listening indicator
           if (_isSpeaking || _isListening)
             Container(
               margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: _isSpeaking ? Colors.blue[100] : Colors.green[100],
+                color: _isSpeaking
+                    ? Colors.blue[100]
+                    : Colors.green[100],
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -793,20 +770,24 @@ class _ChatScreenState extends State<ChatScreen> {
                   Icon(
                     _isSpeaking ? Icons.volume_up : Icons.mic,
                     size: 18,
-                    color: _isSpeaking ? Colors.blue[700] : Colors.green[700],
+                    color:
+                        _isSpeaking ? Colors.blue[700] : Colors.green[700],
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _isSpeaking ? '🔊 Learno is speaking...' : '🎤 Listening...',
+                    _isSpeaking
+                        ? '🔊 Learno is speaking...'
+                        : '🎤 Listening...',
                     style: TextStyle(
-                      color: _isSpeaking ? Colors.blue[700] : Colors.green[700],
+                      color: _isSpeaking
+                          ? Colors.blue[700]
+                          : Colors.green[700],
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
             ),
-          // Input row
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
@@ -814,19 +795,17 @@ class _ChatScreenState extends State<ChatScreen> {
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2)),
               ],
             ),
             child: Row(
               children: [
-                // Text input
                 Expanded(
                   child: TextField(
                     controller: _textController,
-                    onSubmitted: _isLoading ? null : (t) => _sendMessage(t),
+                    onSubmitted: _inputBlocked ? null : (t) => _sendMessage(t),
                     decoration: InputDecoration(
                       hintText: _isVoiceMode
                           ? 'Tap mic or type...'
@@ -835,7 +814,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                 ),
-                // Mic button (voice mode)
                 if (_isVoiceMode)
                   GestureDetector(
                     onTap: _isListening ? _stopListening : _startListening,
@@ -843,7 +821,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: _isListening
-                            ? Colors.red[400]
+                            ? const Color(0xFF76310F)
                             : const Color(0xFFFF8D00),
                         shape: BoxShape.circle,
                       ),
@@ -854,12 +832,11 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                   ),
-                // Send button
                 if (!_isVoiceMode || _textController.text.isNotEmpty)
                   IconButton(
                     icon: const Icon(Icons.send, color: Color(0xFFFF8D00)),
                     iconSize: 28,
-                    onPressed: _isLoading
+                    onPressed: _inputBlocked
                         ? null
                         : () => _sendMessage(_textController.text),
                   ),
@@ -871,61 +848,152 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // ===========================================================================
-  // LEVEL HELPERS
-  // ===========================================================================
+  // =========================================================================
+  // LEVEL HELPERS  (unchanged)
+  // =========================================================================
 
   Color _getLevelColor(String level) {
     switch (level) {
-      case 'struggling':
-        return Colors.orange;
-      case 'developing':
-        return Colors.blue;
-      case 'proficient':
-        return Colors.green;
-      case 'advanced':
-        return Colors.purple;
-      default:
-        return Colors.grey;
+      case 'struggling': return Colors.orange;
+      case 'developing': return Colors.blue;
+      case 'proficient': return Colors.green;
+      case 'advanced':   return Colors.purple;
+      default:           return Colors.grey;
     }
   }
 
   IconData _getLevelIcon(String level) {
     switch (level) {
-      case 'struggling':
-        return Icons.support;
-      case 'developing':
-        return Icons.trending_up;
-      case 'proficient':
-        return Icons.star;
-      case 'advanced':
-        return Icons.emoji_events;
-      default:
-        return Icons.school;
+      case 'struggling': return Icons.support;
+      case 'developing': return Icons.trending_up;
+      case 'proficient': return Icons.star;
+      case 'advanced':   return Icons.emoji_events;
+      default:           return Icons.school;
     }
   }
 
   String _getLevelText(String level) {
     switch (level) {
-      case 'struggling':
-        return 'Learning';
-      case 'developing':
-        return 'Growing';
-      case 'proficient':
-        return 'Great!';
-      case 'advanced':
-        return 'Star!';
-      default:
-        return '';
+      case 'struggling': return 'Learning';
+      case 'developing': return 'Growing';
+      case 'proficient': return 'Great!';
+      case 'advanced':   return 'Star!';
+      default:           return '';
     }
   }
 }
 
-// ===========================================================================
+// =============================================================================
+// TYPING INDICATOR — three bouncing dots, brand colors
+// =============================================================================
+
+/// Animated three-dot typing indicator shown between sequential message chunks.
+///
+/// Colors: cream background (#FFEDDC), dark brown dots (#44200B).
+/// Animation: each dot gently bounces up with a staggered 1/3-cycle offset.
+/// Speed: 900 ms cycle — slow and calm for young children.
+class _TypingIndicator extends StatefulWidget {
+  const _TypingIndicator();
+
+  @override
+  State<_TypingIndicator> createState() => _TypingIndicatorState();
+}
+
+class _TypingIndicatorState extends State<_TypingIndicator>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFEDDC),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _Dot(controller: _controller, phase: 0.0),
+            const SizedBox(width: 5),
+            _Dot(controller: _controller, phase: 1 / 3),
+            const SizedBox(width: 5),
+            _Dot(controller: _controller, phase: 2 / 3),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One bouncing dot within the typing indicator.
+class _Dot extends StatelessWidget {
+  final AnimationController controller;
+  final double phase; // 0.0, 1/3, or 2/3
+
+  const _Dot({required this.controller, required this.phase});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        // Offset the controller value by the dot's phase, wrap to [0, 1).
+        final t = (controller.value + phase) % 1.0;
+        // Smooth up-and-down: rise for first half, fall for second half.
+        final bounce = t < 0.5
+            ? Curves.easeOut.transform(t * 2)
+            : Curves.easeIn.transform((1.0 - t) * 2);
+        return Transform.translate(
+          offset: Offset(0, -6 * bounce),
+          child: child!,
+        );
+      },
+      child: Container(
+        width: 9,
+        height: 9,
+        decoration: const BoxDecoration(
+          color: Color(0xFF44200B),
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
 // UI MESSAGE MODEL
-// ===========================================================================
+// =============================================================================
 
 class _ChatMessageUI {
+  static int _counter = 0;
+
+  final int id;
   final String text;
   final bool isUser;
   final String? responseType;
@@ -938,5 +1006,14 @@ class _ChatMessageUI {
     this.responseType,
     this.imageUrl,
     this.isVoiceMessage = false,
-  });
+  }) : id = _counter++;
 }
+
+// =============================================================================
+// LOCAL IMPORTS — services used directly by this screen
+// =============================================================================
+// These are declared at the top via relative imports but repeated here as
+// reminder: TTSService lives in services/tts_service.dart,
+// STTService in services/stt_service.dart.
+import '../services/tts_service.dart';
+import '../services/stt_service.dart';

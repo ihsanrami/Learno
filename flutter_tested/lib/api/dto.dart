@@ -98,29 +98,54 @@ class EndSessionRequest {
 // RESPONSES
 // =============================================================================
 
-/// Learno's response (text + image)
-class LearnoResponse {
+/// One display-ready message segment returned by the backend splitter.
+class MessageChunk {
   final String text;
+  final int delayMs;
+
+  const MessageChunk({required this.text, required this.delayMs});
+
+  factory MessageChunk.fromJson(Map<String, dynamic> json) => MessageChunk(
+        text: json['text'] as String? ?? '',
+        delayMs: json['delay_ms'] as int? ?? 0,
+      );
+}
+
+/// Learno's response (text + split message chunks + optional image)
+class LearnoResponse {
+  final String text;              // full text — fallback for TTS and older clients
+  final List<MessageChunk> messages; // sequential chunks for display
   final String responseType;
   final String? imageReference;
-  final String? generatedImageUrl;  // 🆕 AI-generated image
+  final String? generatedImageUrl;
+  final int? imagePosition;       // chunk index after which the image appears
 
   LearnoResponse({
     required this.text,
     required this.responseType,
+    this.messages = const [],
     this.imageReference,
     this.generatedImageUrl,
+    this.imagePosition,
   });
 
   factory LearnoResponse.fromJson(Map<String, dynamic> json) {
+    final rawChunks = json['messages'] as List<dynamic>?;
     return LearnoResponse(
-      text: json['text'] ?? '',
-      responseType: json['response_type'] ?? 'message',
-      imageReference: json['image_reference'],
-      generatedImageUrl: json['generated_image_url'],
+      text: json['text'] as String? ?? '',
+      messages: rawChunks != null
+          ? rawChunks
+              .map((m) => MessageChunk.fromJson(m as Map<String, dynamic>))
+              .toList()
+          : const [],
+      responseType: json['response_type'] as String? ?? 'message',
+      imageReference: json['image_reference'] as String?,
+      generatedImageUrl: json['generated_image_url'] as String?,
+      imagePosition: json['image_position'] as int?,
     );
   }
 
+  bool get hasMessages => messages.isNotEmpty;
   bool get hasImage => generatedImageUrl != null || imageReference != null;
   String? get displayImageUrl => generatedImageUrl ?? imageReference;
 }

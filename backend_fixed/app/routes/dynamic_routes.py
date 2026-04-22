@@ -97,10 +97,18 @@ class EndSessionRequest(BaseModel):
 # RESPONSE MODELS
 # =============================================================================
 
-class LearnoResponseData(BaseModel):
+class MessageChunkData(BaseModel):
+    """One display-ready message segment with its pre-display delay."""
     text: str
+    delay_ms: int
+
+
+class LearnoResponseData(BaseModel):
+    text: str                                    # full text fallback for older clients
+    messages: list[MessageChunkData] = []        # sequential chunks for new clients
     response_type: str
     generated_image_url: Optional[str] = None
+    image_position: Optional[int] = None         # chunk index after which image appears
 
 
 class ProgressData(BaseModel):
@@ -198,8 +206,13 @@ async def start_session(request: StartSessionRequest):
             session_id=session.session_id,
             learno_response=LearnoResponseData(
                 text=response.text,
+                messages=[
+                    MessageChunkData(text=c.text, delay_ms=c.delay_ms)
+                    for c in response.messages
+                ],
                 response_type=response.response_type,
-                generated_image_url=response.image_url
+                generated_image_url=response.image_url,
+                image_position=response.image_position,
             ),
             progress=progress
         )
@@ -258,8 +271,13 @@ async def continue_teaching(request: ContinueRequest):
         data=LessonResponseData(
             learno_response=LearnoResponseData(
                 text=response.text,
+                messages=[
+                    MessageChunkData(text=c.text, delay_ms=c.delay_ms)
+                    for c in response.messages
+                ],
                 response_type=response.response_type,
-                generated_image_url=response.image_url
+                generated_image_url=response.image_url,
+                image_position=response.image_position,
             ),
             progress=progress,
             is_complete=response.is_lesson_complete
@@ -295,8 +313,13 @@ async def respond_to_question(request: ChildResponseRequest):
         data=LessonResponseData(
             learno_response=LearnoResponseData(
                 text=response.text,
+                messages=[
+                    MessageChunkData(text=c.text, delay_ms=c.delay_ms)
+                    for c in response.messages
+                ],
                 response_type=response.response_type,
-                generated_image_url=response.image_url
+                generated_image_url=response.image_url,
+                image_position=response.image_position,
             ),
             progress=progress,
             is_complete=response.is_lesson_complete
@@ -332,8 +355,13 @@ async def handle_silence(request: SilenceNotificationRequest):
         data=LessonResponseData(
             learno_response=LearnoResponseData(
                 text=response.text,
+                messages=[
+                    MessageChunkData(text=c.text, delay_ms=c.delay_ms)
+                    for c in response.messages
+                ],
                 response_type=response.response_type,
-                generated_image_url=response.image_url
+                generated_image_url=response.image_url,
+                image_position=response.image_position,
             ),
             progress=progress,
             is_complete=False
