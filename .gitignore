@@ -1,0 +1,21 @@
+# Flutter
+build/
+**/build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+
+# Android
+**/.gradle/
+**/local.properties
+
+# Python
+venv/
+__pycache__/
+*.pyc
+.env
+
+# IDE
+.idea/
+.vscode/

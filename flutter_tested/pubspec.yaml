@@ -1,0 +1,57 @@
+# =============================================================================
+# Learno Flutter App - pubspec.yaml
+# =============================================================================
+# ✅ FIXED: SDK version, removed missing assets
+# =============================================================================
+
+name: learno
+description: "Learno - AI-Powered Educational App for Kids"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # UI
+  cupertino_icons: ^1.0.8
+  
+  # HTTP client
+  http: ^1.2.0
+  
+  # Text-to-Speech (Learno speaks)
+  flutter_tts: ^3.8.5
+  
+  # Speech-to-Text (Child speaks)
+  speech_to_text: ^7.0.0
+  
+  # Permission handling
+  permission_handler: ^11.3.1
+  
+  # Local storage (student data)
+  shared_preferences: ^2.2.3
+  
+  # UUID generation (student ID)
+  uuid: ^4.4.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+
+  fonts:
+    - family: Recoleta
+      fonts:
+        - asset: assets/fonts/fonnts.com-recoleta-semibold.otf
+          weight: 600
+        - asset: assets/fonts/fonnts.com-recoletaalt-black.otf
+          weight: 900
