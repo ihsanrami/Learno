@@ -11,6 +11,7 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../core/session_state.dart';
 import '../api/api_service.dart';
@@ -694,27 +695,34 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: Image.network(
-          imageUrl,
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
           width: 220,
           height: 220,
           fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              width: 220,
-              height: 220,
-              color: Colors.grey[200],
-              child: const Center(
-                  child: CircularProgressIndicator(
-                      color: Color(0xFFFF8D00))),
-            );
-          },
-          errorBuilder: (_, __, ___) => Container(
+          placeholder: (context, url) => Container(
             width: 220,
             height: 220,
-            color: Colors.grey[200],
-            child: const Icon(Icons.image_not_supported, size: 50),
+            color: const Color(0xFFFFEDDC),
+            child: const Center(
+              child: CircularProgressIndicator(color: Color(0xFFFF8D00)),
+            ),
+          ),
+          errorWidget: (context, url, error) => Container(
+            width: 220,
+            height: 220,
+            decoration: const BoxDecoration(color: Color(0xFFFFEDDC)),
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.image_not_supported,
+                    size: 50, color: Color(0xFF76310F)),
+                SizedBox(height: 8),
+                Text('Image not available',
+                    style: TextStyle(
+                        color: Color(0xFF76310F), fontSize: 12)),
+              ],
+            ),
           ),
         ),
       ),

@@ -11,6 +11,12 @@ class ApiConfig {
   
   // For Android Emulator:
   static const String baseUrl = 'http://10.0.2.2:8000/api/v1';
+
+  // Root URL of the backend server (used to build static file URLs).
+  static String get serverRoot {
+    final uri = Uri.parse(baseUrl);
+    return '${uri.scheme}://${uri.host}:${uri.port}';
+  }
   
   // For Chrome/Web - uncomment this:
   // static const String baseUrl = 'http://localhost:8000/api/v1';

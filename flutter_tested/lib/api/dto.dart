@@ -4,6 +4,8 @@
 /// 🔄 UPDATED: Added student tracking, analytics, progress
 /// =============================================================================
 
+import 'api_config.dart';
+
 // =============================================================================
 // REQUESTS
 // =============================================================================
@@ -147,7 +149,15 @@ class LearnoResponse {
 
   bool get hasMessages => messages.isNotEmpty;
   bool get hasImage => generatedImageUrl != null || imageReference != null;
-  String? get displayImageUrl => generatedImageUrl ?? imageReference;
+
+  /// Returns a fully-qualified image URL.
+  /// Relative paths (e.g. /static/...) are resolved against the backend root.
+  String? get displayImageUrl {
+    final url = generatedImageUrl ?? imageReference;
+    if (url == null) return null;
+    if (url.startsWith('http')) return url;
+    return '${ApiConfig.serverRoot}$url';
+  }
 }
 
 /// Progress tracking

@@ -16,6 +16,9 @@ __pycache__/
 *.pyc
 .env
 
+# AI-generated images (served via proxy, not committed)
+static/generated_images/
+
 # IDE
 .idea/
 .vscode/

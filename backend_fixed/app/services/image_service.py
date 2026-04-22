@@ -23,6 +23,7 @@ from pathlib import Path
 import openai
 from app.config import settings
 from app.utils.exceptions import AIServiceError
+from app.services.image_proxy import download_and_cache_sync, download_and_cache_async
 
 logger = logging.getLogger(__name__)
 
@@ -148,11 +149,17 @@ class ImageGenerationService:
             )
             
             # Extract URL
-            image_url = response.data[0].url
-            
+            dalle_url = response.data[0].url
+
+            # Proxy: download immediately so the URL never expires
+            proxied = await download_and_cache_async(dalle_url)
+            image_url = proxied if proxied else dalle_url
+            if not proxied:
+                logger.warning("Image proxy failed; falling back to DALL-E URL")
+
             # Cache the result
             self._cache[cache_key] = image_url
-            
+
             logger.info(f"Image generated successfully: {cache_key}")
             return image_url, None
             
@@ -198,17 +205,22 @@ class ImageGenerationService:
                 response_format="url"
             )
             
-            image_url = response.data[0].url
-            
+            dalle_url = response.data[0].url
+
+            # Proxy: download immediately so the URL never expires
+            proxied = download_and_cache_sync(dalle_url)
+            image_url = proxied if proxied else dalle_url
+            if not proxied:
+                logger.warning("Image proxy failed; falling back to DALL-E URL")
+
             # Enforce cache size limit
             if len(self._cache) >= self.MAX_CACHE_SIZE:
-                # Remove oldest entry
                 oldest_key = next(iter(self._cache))
                 del self._cache[oldest_key]
                 logger.debug(f"Cache full, removed: {oldest_key}")
-            
+
             self._cache[cache_key] = image_url
-            
+
             logger.info(f"Image generated successfully: {cache_key}")
             return image_url, None
             

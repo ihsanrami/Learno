@@ -37,6 +37,9 @@ dependencies:
   # UUID generation (student ID)
   uuid: ^4.4.2
 
+  # Image caching (persists images across app restarts)
+  cached_network_image: ^3.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

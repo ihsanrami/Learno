@@ -11,9 +11,11 @@ Changes:
 =============================================================================
 """
 
+import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.routes.dynamic_routes import session_router, lesson_router
@@ -37,6 +39,13 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+
+# =============================================================================
+# Static Files (proxied AI-generated images)
+# =============================================================================
+
+os.makedirs("static/generated_images", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # =============================================================================
 # CORS Middleware
