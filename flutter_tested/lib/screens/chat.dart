@@ -10,7 +10,6 @@
 /// =============================================================================
 
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../core/session_state.dart';
@@ -18,6 +17,8 @@ import '../api/api_service.dart';
 import '../api/api_config.dart';
 import '../api/dto.dart';
 import '../models/message_queue.dart';
+import '../services/tts_service.dart';
+import '../services/stt_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -109,13 +110,13 @@ class _ChatScreenState extends State<ChatScreen> {
       _checkBothComplete();
     };
 
-    await _sst.init();
-    _sst.onResult = (text, isFinal) {
+    await _stt.init();
+    _stt.onResult = (text, isFinal) {
       if (isFinal && text.isNotEmpty) _sendMessage(text, isVoice: true);
     };
-    _sst.onListeningStarted = () => setState(() => _isListening = true);
-    _sst.onListeningStopped = () => setState(() => _isListening = false);
-    _sst.onError = (error) => setState(() => _isListening = false);
+    _stt.onListeningStarted = () => setState(() => _isListening = true);
+    _stt.onListeningStopped = () => setState(() => _isListening = false);
+    _stt.onError = (error) => setState(() => _isListening = false);
   }
 
   // =========================================================================
@@ -303,7 +304,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _queueDone = false;
 
     if (_isSpeaking) await _tts.stop();
-    if (_isListening) await _sst.stopListening();
+    if (_isListening) await _stt.stopListening();
 
     _resetSilenceTimer();
     _silenceHandled = false;
@@ -358,10 +359,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _startListening() async {
     if (!_isVoiceMode || _isLoading || _isSpeaking) return;
-    await _sst.startListening();
+    await _stt.startListening();
   }
 
-  void _stopListening() async => _sst.stopListening();
+  void _stopListening() async => _stt.stopListening();
 
   void _toggleVoiceMode() {
     setState(() {
@@ -370,7 +371,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
     if (!_isVoiceMode) {
       _tts.stop();
-      _sst.stopListening();
+      _stt.stopListening();
     }
   }
 
@@ -1009,11 +1010,3 @@ class _ChatMessageUI {
   }) : id = _counter++;
 }
 
-// =============================================================================
-// LOCAL IMPORTS — services used directly by this screen
-// =============================================================================
-// These are declared at the top via relative imports but repeated here as
-// reminder: TTSService lives in services/tts_service.dart,
-// STTService in services/stt_service.dart.
-import '../services/tts_service.dart';
-import '../services/stt_service.dart';
