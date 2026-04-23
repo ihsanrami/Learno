@@ -54,6 +54,31 @@ class LearnoAIClient:
             logger.exception("OpenAI error")
             raise AIServiceError(f"OpenAI request failed: {str(e)}")
 
+    def generate_json_response(self, messages: List[Dict[str, str]]) -> str:
+        """Generate a JSON-structured response from OpenAI (used for chapter generation)."""
+        try:
+            response = openai.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                max_tokens=4000,
+                temperature=0.7,
+                response_format={"type": "json_object"},
+            )
+            content = response.choices[0].message.content
+            if not content:
+                raise AIServiceError("Empty JSON response from OpenAI")
+            return content.strip()
+        except openai.AuthenticationError:
+            raise AIServiceError("Invalid OpenAI API key")
+        except openai.RateLimitError:
+            raise AIServiceError("OpenAI rate limit exceeded")
+        except openai.APIConnectionError:
+            raise AIServiceError("Cannot reach OpenAI servers")
+        except Exception as e:
+            # Fallback: try without response_format (older model versions)
+            logger.warning(f"JSON mode failed ({e}), retrying without response_format")
+            return self.generate_response(messages)
+
 
 _ai_client: Optional[LearnoAIClient] = None
 

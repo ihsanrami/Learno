@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/enums.dart';
 import '../core/session_state.dart';
-import 'math.dart';
+import 'topics.dart';
 
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});
@@ -183,27 +183,9 @@ class CategoriesScreen extends StatelessWidget {
 
   void _openSubject(BuildContext context, Subject subject) {
     SessionState.subject = subject;
-
-    if (subject == Subject.math &&
-        SessionState.grade == Grade.second) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const MathScreen(),
-        ),
-      );
-      return;
-    }
-
-    final message = subject == Subject.math
-        ? 'Math is available for Second Grade only'
-        : 'Coming soon 🚧';
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 1),
-      ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const TopicsScreen()),
     );
   }
 }

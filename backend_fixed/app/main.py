@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.routes.dynamic_routes import session_router, lesson_router
+from app.routes.dynamic_routes import session_router, lesson_router, curriculum_router
 from app.utils.exceptions import (
     SessionNotFoundError,
     SessionExpiredError,
@@ -67,6 +67,7 @@ API_PREFIX = f"/api/{settings.API_VERSION}"
 
 app.include_router(session_router, prefix=API_PREFIX)
 app.include_router(lesson_router, prefix=API_PREFIX)
+app.include_router(curriculum_router, prefix=API_PREFIX)
 
 
 # =============================================================================

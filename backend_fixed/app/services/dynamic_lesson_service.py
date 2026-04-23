@@ -16,6 +16,8 @@ from app.models.lesson_content import (
     ConceptPhase, LessonPhase,
     get_chapter, is_chapter_available
 )
+from app.models.curriculum import is_valid_topic, find_topic_by_name, get_topic
+from app.ai.chapter_generator import generate_chapter
 from app.services.session_service import get_session_service
 from app.services.image_service import get_image_service
 from app.services.message_splitter import get_message_splitter, MessageChunk
@@ -142,16 +144,39 @@ class DynamicLessonService:
             image_position=image_position,
         )
 
+    def _get_chapter_for_session(self, grade: int, subject: str, lesson: str) -> ChapterContent:
+        """
+        Resolve ChapterContent from either the static library (Grade 2 Math backward-compat)
+        or from the dynamic GPT-4 generator (all other grade/subject/topic combos).
+        """
+        # Static path: Grade 2 Math legacy topics
+        if is_chapter_available(grade, subject, lesson):
+            chapter = get_chapter(lesson)
+            if chapter:
+                return chapter
+
+        # Dynamic path: resolve topic from curriculum then generate/cache
+        topic = get_topic(grade, subject, lesson) or find_topic_by_name(grade, subject, lesson)
+        if topic:
+            return generate_chapter(grade, subject, topic.topic_id, topic.name_en)
+
+        # Final fallback — shouldn't reach here after validation in start_lesson
+        logger.warning(f"Falling back to counting chapter for {grade}/{subject}/{lesson}")
+        return get_chapter("counting")
+
     def start_lesson(self, grade: int, subject: str, lesson: str) -> Tuple[any, LearnoResponse]:
         """Start a new comprehensive lesson"""
 
-        if not is_chapter_available(grade, subject, lesson):
+        # Validate: topic must exist in static library OR in curriculum
+        if not is_chapter_available(grade, subject, lesson) and \
+                not is_valid_topic(grade, subject, lesson):
             raise LessonNotAvailableError(
-                "Only Grade 2 → Math → Counting is available for now."
+                f"Topic '{lesson}' not found for Grade {grade} / {subject}. "
+                "Check /api/v1/curriculum/topics for available topics."
             )
 
         session = self.session_service.create_session(grade, subject, lesson)
-        chapter = get_chapter(lesson) or get_chapter("counting")
+        chapter = self._get_chapter_for_session(grade, subject, lesson)
 
         state = self._get_state(session.session_id)
         state.lesson_phase = LessonPhase.WELCOME
@@ -184,7 +209,7 @@ class DynamicLessonService:
 
         session = self.session_service.get_session(session_id)
         state = self._get_state(session_id)
-        chapter = get_chapter(session.lesson) or get_chapter("counting")
+        chapter = self._get_chapter_for_session(session.grade, session.subject, session.lesson)
 
         if state.current_concept_index >= chapter.total_concepts:
             if state.lesson_phase != LessonPhase.CHAPTER_REVIEW:
@@ -408,7 +433,7 @@ class DynamicLessonService:
 
         session = self.session_service.get_session(session_id)
         state = self._get_state(session_id)
-        chapter = get_chapter(session.lesson) or get_chapter("counting")
+        chapter = self._get_chapter_for_session(session.grade, session.subject, session.lesson)
 
         is_correct = self._evaluate_answer(transcript, state)
 
@@ -497,10 +522,9 @@ class DynamicLessonService:
             state.review_question_index += 1
 
     def handle_silence(self, session_id: str, duration: float) -> LearnoResponse:
-        # FIXED: Validate session first before getting state
         session = self.session_service.get_session(session_id)
         state = self._get_state(session_id)
-        chapter = get_chapter(session.lesson) or get_chapter("counting")
+        chapter = self._get_chapter_for_session(session.grade, session.subject, session.lesson)
 
         hint_text = state.current_hint or "Take your time! You can do it! 😊"
 

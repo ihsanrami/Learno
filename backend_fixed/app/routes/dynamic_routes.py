@@ -10,11 +10,15 @@ Routes for Dynamic Lesson System - FIXED VERSION
 
 import logging
 import re
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from pydantic import BaseModel, validator
-from typing import Optional
+from typing import List, Optional
 
 from app.services.dynamic_lesson_service import get_dynamic_lesson_service
+from app.models.curriculum import (
+    get_topics, GradeLevel, SubjectType,
+    GRADE_DISPLAY_NAMES, get_grade_display_name,
+)
 from app.utils.exceptions import InvalidInputError
 
 logger = logging.getLogger(__name__)
@@ -367,3 +371,90 @@ async def handle_silence(request: SilenceNotificationRequest):
             is_complete=False
         )
     )
+
+
+# =============================================================================
+# CURRICULUM ROUTER
+# =============================================================================
+
+curriculum_router = APIRouter(prefix="/curriculum", tags=["Curriculum"])
+
+
+class GradeInfo(BaseModel):
+    grade: int
+    name: str
+    age_range: str
+
+
+class SubjectInfo(BaseModel):
+    subject: str
+    display_name: str
+
+
+class TopicData(BaseModel):
+    topic_id: str
+    name_en: str
+    name_ar: str
+    order: int
+    difficulty_level: int
+
+
+_SUBJECT_DISPLAY = {
+    "math": "Math",
+    "science": "Science",
+    "english": "English",
+    "arabic": "Arabic",
+}
+
+_AGE_RANGES = {0: "4-5", 1: "5-6", 2: "6-7", 3: "7-8", 4: "8-9"}
+
+
+@curriculum_router.get("/grades")
+async def list_grades():
+    """Return all supported grades."""
+    grades = [
+        GradeInfo(
+            grade=g.value,
+            name=GRADE_DISPLAY_NAMES.get(g.value, f"Grade {g.value}"),
+            age_range=_AGE_RANGES.get(g.value, ""),
+        )
+        for g in GradeLevel
+    ]
+    return {"status": "success", "message": "Grades retrieved", "data": grades}
+
+
+@curriculum_router.get("/subjects")
+async def list_subjects(grade: int = Query(..., ge=0, le=4)):
+    """Return all subjects for a given grade (currently the same 4 for every grade)."""
+    subjects = [
+        SubjectInfo(subject=s.value, display_name=_SUBJECT_DISPLAY.get(s.value, s.value.title()))
+        for s in SubjectType
+    ]
+    return {"status": "success", "message": "Subjects retrieved", "data": subjects}
+
+
+@curriculum_router.get("/topics")
+async def list_topics(
+    grade: int = Query(..., ge=0, le=4),
+    subject: str = Query(...),
+):
+    """Return all topics for a given grade and subject."""
+    topics_raw = get_topics(grade, subject)
+    if not topics_raw:
+        return {
+            "status": "error",
+            "message": f"No topics found for grade={grade} subject={subject}",
+            "data": [],
+        }
+
+    topics = [
+        TopicData(
+            topic_id=t.topic_id,
+            name_en=t.name_en,
+            name_ar=t.name_ar,
+            order=t.order,
+            difficulty_level=t.difficulty_level,
+        )
+        for t in topics_raw
+    ]
+    return {"status": "success", "message": "Topics retrieved", "data": topics}

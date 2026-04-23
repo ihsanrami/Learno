@@ -152,6 +152,31 @@ class ApiService {
   }
 
   // ==========================================================================
+  // CURRICULUM
+  // ==========================================================================
+
+  static Future<List<TopicData>> fetchTopics(int grade, String subject) async {
+    final url = Uri.parse(
+      '${ApiConfig.baseUrl}${ApiConfig.curriculumTopics}'
+      '?grade=$grade&subject=$subject',
+    );
+
+    final response = await http
+        .get(url, headers: _headers)
+        .timeout(ApiConfig.connectionTimeout);
+
+    if (response.statusCode != 200) {
+      throw ApiException('Server error: ${response.statusCode}');
+    }
+
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final rawList = decoded['data'] as List<dynamic>? ?? [];
+    return rawList
+        .map((e) => TopicData.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ==========================================================================
   // HELPERS
   // ==========================================================================
 

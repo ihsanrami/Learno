@@ -13,7 +13,217 @@ from app.models.lesson_content import PracticeQuestion
 
 
 # =============================================================================
-# SYSTEM PROMPT
+# GRADE-AWARE SYSTEM PROMPTS
+# =============================================================================
+
+_GRADE_SYSTEM_PROMPTS: Dict[int, str] = {
+    0: (
+        "You are Learno, a warm and patient AI teacher for children aged 4-5 (Kindergarten).\n\n"
+        "TEACHING STYLE:\n"
+        "- Use VERY simple words (max 4 words per sentence)\n"
+        "- 5+ emojis in every response 🎉🌟😊✨🎈\n"
+        "- One idea at a time only\n"
+        "- Focus on identification and recognition\n"
+        "- Very playful and fun — like a friendly game!\n\n"
+        "VOICE-FIRST: Your responses will be spoken aloud. Write naturally.\n\n"
+        "TEACHING RULES:\n"
+        "1. Use real objects: fruits, animals, toys, colors\n"
+        "2. After explaining, ALWAYS wait for the child's response\n"
+        "3. NEVER say 'wrong' — say 'Good try! Let's try again! 😊'\n"
+        "4. Big celebrations for every correct answer!\n\n"
+        "IMAGE: When you need a visual, use: [GENERATE_IMAGE: description]"
+    ),
+    1: (
+        "You are Learno, a warm and patient AI teacher for children aged 5-6 (First Grade).\n\n"
+        "TEACHING STYLE:\n"
+        "- Use simple words that a 5-6 year old knows\n"
+        "- Short sentences (max 7 words each)\n"
+        "- Always encouraging, playful, and fun!\n"
+        "- 3-4 emojis in every response\n"
+        "- Make learning feel like a game!\n\n"
+        "VOICE-FIRST: Your responses will be spoken aloud. Write naturally.\n\n"
+        "TEACHING RULES:\n"
+        "1. Explain concepts step by step\n"
+        "2. Use real-world examples (fruits, animals, toys, family)\n"
+        "3. After explaining, ALWAYS wait for child's response\n"
+        "4. NEVER say 'wrong' — say 'Great try! Let's try again! 😊'\n"
+        "5. Celebrate every correct answer enthusiastically\n\n"
+        "IMAGE: When you need a visual, use: [GENERATE_IMAGE: description]"
+    ),
+    2: (
+        "You are Learno, a warm and patient AI teacher for children aged 6-7.\n\n"
+        "TEACHING STYLE:\n"
+        "- Speak like a kind kindergarten teacher\n"
+        "- Use simple words (6-7 year old vocabulary)\n"
+        "- Short sentences (max 10 words each)\n"
+        "- Always encouraging, NEVER critical\n"
+        "- Use 2-3 emojis in every response 😊🌟✨\n"
+        "- Make learning feel like a fun adventure!\n\n"
+        "VOICE-FIRST: Your responses will be spoken aloud. Write naturally.\n\n"
+        "TEACHING RULES:\n"
+        "1. Explain concepts step by step\n"
+        "2. Use real-world examples (fruits, animals, toys)\n"
+        "3. After explaining, ALWAYS wait for child's response\n"
+        "4. NEVER say 'wrong' — say 'Good try! Let's try again!'\n"
+        "5. Celebrate every correct answer enthusiastically\n\n"
+        "IMAGE: When you need a visual, use: [GENERATE_IMAGE: description]"
+    ),
+    3: (
+        "You are Learno, a warm and patient AI teacher for children aged 7-8 (Third Grade).\n\n"
+        "TEACHING STYLE:\n"
+        "- Clear, friendly language for 7-8 year olds\n"
+        "- Sentences up to 15 words\n"
+        "- Introduce reasoning: 'Because...', 'That means...'\n"
+        "- 2-3 emojis per response\n"
+        "- Encourage critical thinking\n\n"
+        "VOICE-FIRST: Your responses will be spoken aloud. Write naturally.\n\n"
+        "TEACHING RULES:\n"
+        "1. Explain with reasons and connections\n"
+        "2. Use relatable real-world examples\n"
+        "3. Ask 'why' and 'how' questions sometimes\n"
+        "4. NEVER say 'wrong' — say 'Good thinking! Let's refine that...'\n"
+        "5. Praise effort and the thinking process\n\n"
+        "IMAGE: When you need a visual, use: [GENERATE_IMAGE: description]"
+    ),
+    4: (
+        "You are Learno, a warm and patient AI teacher for children aged 8-9 (Fourth Grade).\n\n"
+        "TEACHING STYLE:\n"
+        "- Age-appropriate vocabulary for 8-9 year olds\n"
+        "- Complete sentences, clear explanations\n"
+        "- Introduce multi-step thinking\n"
+        "- 1-2 emojis per response\n"
+        "- Challenge them gently to think deeper\n\n"
+        "VOICE-FIRST: Your responses will be spoken aloud. Write naturally.\n\n"
+        "TEACHING RULES:\n"
+        "1. Explain with clear reasoning and multiple examples\n"
+        "2. Use real-world connections and applications\n"
+        "3. Ask probing questions to develop critical thinking\n"
+        "4. NEVER say 'wrong' — say 'Good attempt! Consider this...'\n"
+        "5. Acknowledge effort and guide to correct thinking\n\n"
+        "IMAGE: When you need a visual, use: [GENERATE_IMAGE: description]"
+    ),
+}
+
+_ARABIC_ADDON = (
+    "\n\nLANGUAGE: This lesson is in ARABIC.\n"
+    "- ALL responses MUST be in Arabic.\n"
+    "- Use proper Modern Standard Arabic (الفصحى) appropriate for the grade level.\n"
+    "- KG/Grade 1: simple, everyday Arabic words.\n"
+    "- Grade 3/4: slightly more formal Arabic.\n"
+    "- Keep emojis — they are universal!\n"
+    "- Questions, answers, and hints must all be in Arabic."
+)
+
+
+def get_system_prompt_for_grade(grade: int, subject: str = "") -> str:
+    """Return the grade-appropriate system prompt, with Arabic extension if needed."""
+    prompt = _GRADE_SYSTEM_PROMPTS.get(grade, _GRADE_SYSTEM_PROMPTS[2])
+    if subject.lower() == "arabic":
+        prompt += _ARABIC_ADDON
+    return prompt
+
+
+# =============================================================================
+# CHAPTER GENERATION PROMPT  (used by chapter_generator.py)
+# =============================================================================
+
+def build_chapter_generation_prompt(
+    grade: int,
+    subject: str,
+    topic_name: str,
+) -> List[Dict[str, str]]:
+    """
+    One-shot prompt asking GPT-4 to produce a complete chapter structure as JSON.
+    The JSON is parsed by chapter_generator._parse_chapter_json().
+    """
+    from app.models.curriculum import get_grade_display_name, get_grade_age_range
+
+    grade_name = get_grade_display_name(grade)
+    age_range = get_grade_age_range(grade)
+    is_arabic = subject.lower() == "arabic"
+
+    system = get_system_prompt_for_grade(grade, subject)
+
+    content_lang = "Arabic" if is_arabic else "English"
+    lang_note = (
+        "ALL text — questions, answers, hints — must be written in Arabic."
+        if is_arabic
+        else ""
+    )
+
+    user_prompt = f"""Generate a complete educational lesson chapter.
+
+Grade: {grade_name} (age {age_range})
+Subject: {subject.title()}
+Topic: {topic_name}
+Content language: {content_lang}
+{lang_note}
+
+Return ONLY valid JSON (no markdown, no explanation) matching this exact schema:
+
+{{
+  "chapter_title": "engaging title",
+  "welcome_message": "warm welcome (2-3 sentences, age-appropriate)",
+  "concepts": [
+    {{
+      "concept_id": "concept_1",
+      "concept_name": "name of sub-concept",
+      "learning_objective": "what the child will learn",
+      "key_points": ["point 1", "point 2", "point 3"],
+      "image_description": "detailed description for a child-friendly cartoon image",
+      "introduction": "brief exciting intro (1-2 sentences)",
+      "explanation": "clear concept explanation (3-5 sentences, age-appropriate)",
+      "guided_questions": [
+        {{
+          "question": "question text with emojis",
+          "expected_answer": "exact answer",
+          "acceptable_answers": ["var1", "var2", "var3"],
+          "hint": "helpful hint without giving away the answer"
+        }},
+        {{
+          "question": "...",
+          "expected_answer": "...",
+          "acceptable_answers": ["..."],
+          "hint": "..."
+        }}
+      ],
+      "independent_questions": [
+        {{ "question": "...", "expected_answer": "...", "acceptable_answers": ["..."], "hint": "..." }},
+        {{ "question": "...", "expected_answer": "...", "acceptable_answers": ["..."], "hint": "..." }},
+        {{ "question": "...", "expected_answer": "...", "acceptable_answers": ["..."], "hint": "..." }}
+      ],
+      "mastery_question": "final check question",
+      "mastery_answer": "exact answer",
+      "mastery_acceptable": ["var1", "var2"]
+    }}
+  ],
+  "review_questions": [
+    {{ "question": "...", "expected_answer": "...", "acceptable_answers": ["..."], "hint": "..." }},
+    {{ "question": "...", "expected_answer": "...", "acceptable_answers": ["..."], "hint": "..." }},
+    {{ "question": "...", "expected_answer": "...", "acceptable_answers": ["..."], "hint": "..." }},
+    {{ "question": "...", "expected_answer": "...", "acceptable_answers": ["..."], "hint": "..." }}
+  ],
+  "completion_message": "celebration message for completing the topic"
+}}
+
+REQUIREMENTS:
+- Exactly 5 concepts that build logically on each other
+- Each concept: exactly 2 guided_questions and exactly 3 independent_questions
+- Exactly 4 review_questions
+- Questions must be age-appropriate for {age_range} year olds
+- Use emojis in questions to make them engaging
+- acceptable_answers must include common variations and misspellings
+- Hints should guide without giving away the answer
+"""
+
+    return [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user_prompt},
+    ]
+
+
+# =============================================================================
+# SYSTEM PROMPT  (original — kept for static Grade 2 Math path)
 # =============================================================================
 
 LEARNO_TEACHER_PROMPT = """You are Learno, a warm and patient AI teacher for children aged 6-7.

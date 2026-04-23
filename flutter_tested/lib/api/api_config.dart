@@ -33,6 +33,9 @@ class ApiConfig {
   static const String lessonContinue = '/lesson/continue';
   static const String lessonRespond = '/lesson/respond';
   static const String lessonSilence = '/lesson/silence';
+
+  // Curriculum discovery
+  static const String curriculumTopics = '/curriculum/topics';
   
   // ==========================================================================
   // TIMEOUTS & THRESHOLDS

@@ -350,6 +350,31 @@ class EndSessionResponse {
   bool get isSuccess => status == 'success';
 }
 
+/// One topic in the curriculum
+class TopicData {
+  final String topicId;
+  final String nameEn;
+  final String nameAr;
+  final int order;
+  final int difficultyLevel;
+
+  TopicData({
+    required this.topicId,
+    required this.nameEn,
+    required this.nameAr,
+    required this.order,
+    required this.difficultyLevel,
+  });
+
+  factory TopicData.fromJson(Map<String, dynamic> json) => TopicData(
+        topicId: json['topic_id'] as String? ?? '',
+        nameEn: json['name_en'] as String? ?? '',
+        nameAr: json['name_ar'] as String? ?? '',
+        order: json['order'] as int? ?? 0,
+        difficultyLevel: json['difficulty_level'] as int? ?? 1,
+      );
+}
+
 /// Silence response (hint)
 class SilenceResponse {
   final String status;
