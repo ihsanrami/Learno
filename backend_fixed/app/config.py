@@ -3,6 +3,7 @@ Configuration for Learno Educational Backend
 """
 
 import os
+import secrets
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -22,6 +23,15 @@ class Settings:
     API_VERSION: str = "v1"
     APP_TITLE: str = "Learno Educational Backend"
     DEBUG: bool = os.getenv("DEBUG", "true").lower() == "true"
+
+    # Database — set DATABASE_URL env var to use PostgreSQL in production
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./learno.db")
+
+    # JWT — MUST be overridden via JWT_SECRET_KEY env var in production
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", secrets.token_hex(32))
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
 
 settings = Settings()

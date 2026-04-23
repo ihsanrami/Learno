@@ -16,9 +16,13 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
 from app.routes.dynamic_routes import session_router, lesson_router, curriculum_router
+from app.routes.auth_routes import router as auth_router
+from app.routes.children_routes import router as children_router
 from app.utils.exceptions import (
     SessionNotFoundError,
     SessionExpiredError,
@@ -31,6 +35,8 @@ from app.utils.exceptions import (
 # Create FastAPI Application
 # =============================================================================
 
+from app.rate_limiter import limiter
+
 app = FastAPI(
     title=settings.APP_TITLE,
     description="AI-powered educational backend with comprehensive teaching",
@@ -39,6 +45,17 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+@app.on_event("startup")
+async def startup():
+    from app.database.session import engine
+    from app.database.base import Base
+    import app.auth.models  # noqa: F401 — register models
+    Base.metadata.create_all(bind=engine)
 
 # =============================================================================
 # Static Files (proxied AI-generated images)
@@ -68,6 +85,8 @@ API_PREFIX = f"/api/{settings.API_VERSION}"
 app.include_router(session_router, prefix=API_PREFIX)
 app.include_router(lesson_router, prefix=API_PREFIX)
 app.include_router(curriculum_router, prefix=API_PREFIX)
+app.include_router(auth_router, prefix=API_PREFIX)
+app.include_router(children_router, prefix=API_PREFIX)
 
 
 # =============================================================================

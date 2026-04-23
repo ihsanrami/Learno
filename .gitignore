@@ -19,6 +19,11 @@ __pycache__/
 # AI-generated images (served via proxy, not committed)
 static/generated_images/
 
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
 # IDE
 .idea/
 .vscode/
