@@ -36,6 +36,7 @@ class StartSessionRequest(BaseModel):
     subject: str
     lesson: str
     force_new: bool = False
+    child_id: Optional[int] = None
     
     @validator('student_id')
     def validate_student_id(cls, v):
@@ -185,11 +186,12 @@ async def start_session(request: StartSessionRequest):
     )
     
     service = get_dynamic_lesson_service()
-    
+
     session, response = service.start_lesson(
         grade=request.grade,
         subject=request.subject,
-        lesson=request.lesson
+        lesson=request.lesson,
+        child_id=request.child_id,
     )
     
     progress = None

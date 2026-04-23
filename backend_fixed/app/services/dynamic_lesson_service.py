@@ -11,6 +11,9 @@ import re
 from typing import Tuple, Optional, Dict, List
 from dataclasses import dataclass, field
 
+from app.database.session import SessionLocal
+import app.services.analytics_service as analytics_svc
+
 from app.models.lesson_content import (
     ChapterContent, ConceptContent, PracticeQuestion,
     ConceptPhase, LessonPhase,
@@ -100,6 +103,8 @@ class DynamicLessonService:
         self.ai_client = get_ai_client()
         self._splitter = get_message_splitter()
         self._teaching_states: Dict[str, TeachingState] = {}
+        # Maps in-memory session_id -> (child_id, analytics_db_session_id)
+        self._analytics_map: Dict[str, tuple] = {}
         logger.info("DynamicLessonService initialized")
 
     def _get_state(self, session_id: str) -> TeachingState:
@@ -164,7 +169,13 @@ class DynamicLessonService:
         logger.warning(f"Falling back to counting chapter for {grade}/{subject}/{lesson}")
         return get_chapter("counting")
 
-    def start_lesson(self, grade: int, subject: str, lesson: str) -> Tuple[any, LearnoResponse]:
+    def start_lesson(
+        self,
+        grade: int,
+        subject: str,
+        lesson: str,
+        child_id: Optional[int] = None,
+    ) -> Tuple[any, LearnoResponse]:
         """Start a new comprehensive lesson"""
 
         # Validate: topic must exist in static library OR in curriculum
@@ -196,6 +207,24 @@ class DynamicLessonService:
 
         session.total_steps = chapter.total_concepts * 6
         self.session_service.update_session(session)
+
+        # Persist analytics session if child_id provided
+        if child_id is not None:
+            try:
+                db = SessionLocal()
+                try:
+                    analytics_session = analytics_svc.start_session(
+                        db=db,
+                        child_id=child_id,
+                        grade=str(grade),
+                        subject=subject,
+                        topic_id=lesson,
+                    )
+                    self._analytics_map[session.session_id] = (child_id, analytics_session.id)
+                finally:
+                    db.close()
+            except Exception as e:
+                logger.warning(f"Analytics session start failed: {e}")
 
         return session, self._make_response(
             text=clean_text,
@@ -563,15 +592,38 @@ class DynamicLessonService:
 
     def end_lesson(self, session_id: str) -> Tuple[Dict, str]:
         state = self._get_state(session_id)
+        is_complete = state.lesson_phase == LessonPhase.COMPLETED
 
         summary = {
             "concepts_completed": state.current_concept_index,
             "total_correct": state.total_correct,
             "total_wrong": state.total_wrong,
-            "is_complete": state.lesson_phase == LessonPhase.COMPLETED
+            "is_complete": is_complete,
         }
 
-        message = "Great effort today! 🌟" if not summary["is_complete"] else "You completed the whole lesson! 🎉"
+        message = "Great effort today! 🌟" if not is_complete else "You completed the whole lesson! 🎉"
+
+        # Finalize analytics session if tracked
+        if session_id in self._analytics_map:
+            child_id, analytics_id = self._analytics_map.pop(session_id)
+            try:
+                db = SessionLocal()
+                try:
+                    total_q = state.total_correct + state.total_wrong
+                    analytics_svc.end_session(
+                        db=db,
+                        session_id=analytics_id,
+                        questions_correct=state.total_correct,
+                        questions_total=total_q,
+                        concepts_completed=state.current_concept_index,
+                        concepts_total=5,
+                        completed=is_complete,
+                    )
+                    analytics_svc.check_and_award_achievements(db, child_id)
+                finally:
+                    db.close()
+            except Exception as e:
+                logger.warning(f"Analytics session end failed: {e}")
 
         if session_id in self._teaching_states:
             del self._teaching_states[session_id]

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../services/auth_service.dart';
+import '../parent/dashboard_screen.dart';
 import 'login_screen.dart';
 
 const _avatarEmojis = {
@@ -177,7 +178,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                         _buildParentCard(parent),
                         const SizedBox(height: 20),
                         _buildChildrenSection(children),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 20),
+                        _buildDashboardButton(),
+                        const SizedBox(height: 12),
                         _buildLogoutButton(),
                         const SizedBox(height: 24),
                       ],
@@ -332,6 +335,31 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
             onPressed: () => _deleteChild(child),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDashboardButton() {
+    return SizedBox(
+      height: 52,
+      child: ElevatedButton.icon(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        ),
+        icon: const Icon(Icons.bar_chart, size: 20),
+        label: const Text('Parent Dashboard'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFFF8D00),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          textStyle: const TextStyle(
+            fontFamily: 'Recoleta',
+            fontWeight: FontWeight.w900,
+            fontSize: 16,
+          ),
+        ),
       ),
     );
   }

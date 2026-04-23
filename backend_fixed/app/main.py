@@ -23,6 +23,7 @@ from app.config import settings
 from app.routes.dynamic_routes import session_router, lesson_router, curriculum_router
 from app.routes.auth_routes import router as auth_router
 from app.routes.children_routes import router as children_router
+from app.routes.parent_routes import router as parent_router
 from app.utils.exceptions import (
     SessionNotFoundError,
     SessionExpiredError,
@@ -54,7 +55,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 async def startup():
     from app.database.session import engine
     from app.database.base import Base
-    import app.auth.models  # noqa: F401 — register models
+    import app.auth.models  # noqa: F401 — register all models including analytics
     Base.metadata.create_all(bind=engine)
 
 # =============================================================================
@@ -87,6 +88,7 @@ app.include_router(lesson_router, prefix=API_PREFIX)
 app.include_router(curriculum_router, prefix=API_PREFIX)
 app.include_router(auth_router, prefix=API_PREFIX)
 app.include_router(children_router, prefix=API_PREFIX)
+app.include_router(parent_router, prefix=API_PREFIX)
 
 
 # =============================================================================

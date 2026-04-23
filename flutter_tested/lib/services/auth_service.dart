@@ -67,6 +67,8 @@ class AuthService {
   late final Dio _dio;
   bool _initialized = false;
 
+  Dio get dio => _dio;
+
   void init() {
     if (_initialized) return;
     _initialized = true;

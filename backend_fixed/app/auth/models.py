@@ -1,8 +1,9 @@
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Optional
 
 from app.database.base import Base
 
@@ -46,6 +47,68 @@ class ChildProfile(Base):
     )
 
     parent: Mapped["Parent"] = relationship("Parent", back_populates="children")
+    learning_sessions: Mapped[list["LearningSession"]] = relationship(
+        "LearningSession", back_populates="child", cascade="all, delete-orphan"
+    )
+    daily_goals: Mapped[list["DailyGoal"]] = relationship(
+        "DailyGoal", back_populates="child", cascade="all, delete-orphan"
+    )
+    achievements: Mapped[list["Achievement"]] = relationship(
+        "Achievement", back_populates="child", cascade="all, delete-orphan"
+    )
+
+
+class LearningSession(Base):
+    __tablename__ = "learning_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    child_id: Mapped[int] = mapped_column(Integer, ForeignKey("child_profiles.id"), nullable=False)
+    grade: Mapped[str] = mapped_column(String, nullable=False)
+    subject: Mapped[str] = mapped_column(String, nullable=False)
+    topic_id: Mapped[str] = mapped_column(String, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    ended_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    duration_seconds: Mapped[int] = mapped_column(Integer, default=0)
+    questions_total: Mapped[int] = mapped_column(Integer, default=0)
+    questions_correct: Mapped[int] = mapped_column(Integer, default=0)
+    concepts_completed: Mapped[int] = mapped_column(Integer, default=0)
+    concepts_total: Mapped[int] = mapped_column(Integer, default=5)
+    completed: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    child: Mapped["ChildProfile"] = relationship("ChildProfile", back_populates="learning_sessions")
+
+
+class DailyGoal(Base):
+    __tablename__ = "daily_goals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    child_id: Mapped[int] = mapped_column(Integer, ForeignKey("child_profiles.id"), nullable=False)
+    target_minutes: Mapped[int] = mapped_column(Integer, default=15)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+    child: Mapped["ChildProfile"] = relationship("ChildProfile", back_populates="daily_goals")
+
+
+class Achievement(Base):
+    __tablename__ = "achievements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    child_id: Mapped[int] = mapped_column(Integer, ForeignKey("child_profiles.id"), nullable=False)
+    type: Mapped[str] = mapped_column(String, nullable=False)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=False)
+    icon: Mapped[str] = mapped_column(String, nullable=False)
+    earned_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    extra_data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    child: Mapped["ChildProfile"] = relationship("ChildProfile", back_populates="achievements")
 
 
 class RefreshToken(Base):

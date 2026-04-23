@@ -46,6 +46,15 @@ class ApiConfig {
 
   // Children endpoints
   static const String children = '/children';
+
+  // Parent panel endpoints
+  static const String parentDashboard = '/parent/dashboard';
+  static String parentOverview(int childId) => '/parent/children/$childId/overview';
+  static String parentWeekly(int childId) => '/parent/children/$childId/weekly';
+  static String parentTopics(int childId) => '/parent/children/$childId/topics';
+  static String parentSubjects(int childId) => '/parent/children/$childId/subjects';
+  static String parentAchievements(int childId) => '/parent/children/$childId/achievements';
+  static String parentGoal(int childId) => '/parent/children/$childId/goal';
   
   // ==========================================================================
   // TIMEOUTS & THRESHOLDS
