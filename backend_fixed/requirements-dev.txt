@@ -1,0 +1,5 @@
+# Dev/test dependencies (in addition to requirements.txt)
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-mock>=3.12.0
+# httpx is pinned in requirements.txt — do not re-pin here to avoid breaking starlette TestClient
