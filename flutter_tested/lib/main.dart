@@ -1,27 +1,21 @@
-/// =============================================================================
-/// Main Entry Point - Learno Educational App
-/// =============================================================================
-/// ✅ FIXED & TESTED
-/// =============================================================================
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'screens/grades.dart';
+import 'screens/auth/splash_screen.dart';
+import 'services/auth_service.dart';
 import 'services/student_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Lock to portrait mode (better for kids)
+
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
-  // Initialize student storage
+
   await StudentStorage.init();
-  
+  AuthService().init();
+
   runApp(const LearnoApp());
 }
 
@@ -40,7 +34,7 @@ class LearnoApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
-      home: const GradesScreen(),
+      home: const SplashScreen(),
     );
   }
 }

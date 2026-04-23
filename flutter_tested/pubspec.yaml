@@ -40,6 +40,12 @@ dependencies:
   # Image caching (persists images across app restarts)
   cached_network_image: ^3.3.0
 
+  # Auth - secure token storage
+  flutter_secure_storage: ^9.0.0
+
+  # Auth - HTTP client with interceptors (token refresh)
+  dio: ^5.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

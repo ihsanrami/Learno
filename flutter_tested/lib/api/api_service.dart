@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'api_config.dart';
 import 'dto.dart';
 import '../core/session_state.dart';
+import '../controllers/auth_controller.dart';
 import '../services/student_storage.dart';
 import '../models/enums.dart';
 
@@ -18,10 +19,15 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal();
 
-  static const Map<String, String> _headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
+  static Map<String, String> get _headers {
+    final selectedChildId = AuthController().selectedChild?.id;
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (selectedChildId != null)
+        'X-Selected-Child-Id': selectedChildId.toString(),
+    };
+  }
 
   // ==========================================================================
   // SESSION

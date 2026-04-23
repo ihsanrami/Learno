@@ -36,6 +36,16 @@ class ApiConfig {
 
   // Curriculum discovery
   static const String curriculumTopics = '/curriculum/topics';
+
+  // Auth endpoints
+  static const String authRegister = '/auth/register';
+  static const String authLogin = '/auth/login';
+  static const String authLogout = '/auth/logout';
+  static const String authRefresh = '/auth/refresh';
+  static const String authMe = '/auth/me';
+
+  // Children endpoints
+  static const String children = '/children';
   
   // ==========================================================================
   // TIMEOUTS & THRESHOLDS
