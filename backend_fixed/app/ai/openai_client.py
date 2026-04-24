@@ -48,8 +48,12 @@ class LearnoAIClient:
             raise AIServiceError("Invalid OpenAI API key")
         except openai.RateLimitError:
             raise AIServiceError("OpenAI rate limit exceeded")
+        except openai.APITimeoutError:
+            raise AIServiceError("OpenAI request timed out")
         except openai.APIConnectionError:
             raise AIServiceError("Cannot reach OpenAI servers")
+        except openai.InternalServerError:
+            raise AIServiceError("OpenAI server error — please retry")
         except Exception as e:
             logger.exception("OpenAI error")
             raise AIServiceError(f"OpenAI request failed: {str(e)}")
@@ -72,8 +76,12 @@ class LearnoAIClient:
             raise AIServiceError("Invalid OpenAI API key")
         except openai.RateLimitError:
             raise AIServiceError("OpenAI rate limit exceeded")
+        except openai.APITimeoutError:
+            raise AIServiceError("OpenAI request timed out")
         except openai.APIConnectionError:
             raise AIServiceError("Cannot reach OpenAI servers")
+        except openai.InternalServerError:
+            raise AIServiceError("OpenAI server error — please retry")
         except Exception as e:
             # Fallback: try without response_format (older model versions)
             logger.warning(f"JSON mode failed ({e}), retrying without response_format")

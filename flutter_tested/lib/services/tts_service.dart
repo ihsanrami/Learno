@@ -1,11 +1,11 @@
 /// =============================================================================
 /// TTS Service - Text-to-Speech for Learno
 /// =============================================================================
-/// 🆕 NEW FILE
-///
 /// Handles voice output - Learno speaks to the child.
+/// Supports language switching for bilingual (English/Arabic) sessions.
 /// =============================================================================
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 class TTSService {
@@ -17,17 +17,29 @@ class TTSService {
   bool _isInitialized = false;
   bool _isSpeaking = false;
 
+  // Active TTS language — updated via setLanguage() when app language changes.
+  String _language = 'en-US';
+
   // Callbacks
   Function()? onStart;
   Function()? onComplete;
   Function(String)? onError;
+
+  /// Switch the TTS voice language.  Call this whenever the app language changes.
+  /// [languageCode] should be 'en' or 'ar'.
+  Future<void> setLanguage(String languageCode) async {
+    _language = languageCode == 'ar' ? 'ar-SA' : 'en-US';
+    if (_isInitialized) {
+      await _tts.setLanguage(_language);
+    }
+  }
 
   /// Initialize TTS with child-friendly settings
   Future<void> init() async {
     if (_isInitialized) return;
 
     try {
-      await _tts.setLanguage("en-US");
+      await _tts.setLanguage(_language);
       await _tts.setSpeechRate(0.45); // Slower for children
       await _tts.setPitch(1.1); // Friendly pitch
       await _tts.setVolume(1.0);
@@ -49,7 +61,7 @@ class TTSService {
 
       _isInitialized = true;
     } catch (e) {
-      print('❌ TTS init error: $e');
+      debugPrint('TTS init error: $e');
     }
   }
 
@@ -64,7 +76,7 @@ class TTSService {
     try {
       await _tts.speak(cleanText);
     } catch (e) {
-      print('❌ TTS speak error: $e');
+      debugPrint('TTS speak error: $e');
       onError?.call(e.toString());
     }
   }
@@ -75,11 +87,12 @@ class TTSService {
       await _tts.stop();
       _isSpeaking = false;
     } catch (e) {
-      print('❌ TTS stop error: $e');
+      debugPrint('TTS stop error: $e');
     }
   }
 
   bool get isSpeaking => _isSpeaking;
+  String get currentLanguage => _language;
 
   /// Remove emojis (TTS can't pronounce them)
   String _removeEmojis(String text) {

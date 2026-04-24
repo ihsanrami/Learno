@@ -69,6 +69,20 @@ class SessionService:
             del self._sessions[session_id]
             logger.info(f"Session deleted: {session_id}")
 
+    def cleanup_expired(self) -> int:
+        """Remove all expired sessions from memory.  Returns count deleted."""
+        expired = [sid for sid, s in self._sessions.items() if s.is_expired()]
+        for sid in expired:
+            del self._sessions[sid]
+        if expired:
+            logger.info(f"Cleaned up {len(expired)} expired sessions")
+        return len(expired)
+
+    @property
+    def active_count(self) -> int:
+        """Number of non-expired sessions currently in memory."""
+        return sum(1 for s in self._sessions.values() if not s.is_expired())
+
 
 _session_service: Optional[SessionService] = None
 

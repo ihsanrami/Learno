@@ -1,29 +1,32 @@
 /// =============================================================================
 /// API Configuration - Learno Backend Connection
 /// =============================================================================
-/// ✅ FIXED: Better URL handling for different platforms
+/// URL is resolved at compile time from --dart-define=API_BASE_URL=<url>.
+/// Falls back to the Android emulator address when the define is absent.
+///
+/// Usage examples:
+///   flutter run                                    → http://10.0.2.2:8000/api/v1
+///   flutter run --dart-define=API_BASE_URL=http://localhost:8000/api/v1
+///   flutter run --dart-define=API_BASE_URL=https://api.learno.com/api/v1
+///   flutter build apk --dart-define=API_BASE_URL=https://api.learno.com/api/v1
 /// =============================================================================
 
 class ApiConfig {
   // ==========================================================================
-  // BASE URL - CHANGE THIS BASED ON YOUR SETUP
+  // BASE URL — override via --dart-define=API_BASE_URL=<url>
   // ==========================================================================
-  
-  // For Android Emulator:
-  static const String baseUrl = 'http://10.0.2.2:8000/api/v1';
+
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:8000/api/v1',
+  );
 
   // Root URL of the backend server (used to build static file URLs).
   static String get serverRoot {
     final uri = Uri.parse(baseUrl);
     return '${uri.scheme}://${uri.host}:${uri.port}';
   }
-  
-  // For Chrome/Web - uncomment this:
-  // static const String baseUrl = 'http://localhost:8000/api/v1';
-  
-  // For Real Device - replace with your computer's IP:
-  // static const String baseUrl = 'http://192.168.1.100:8000/api/v1';
-  
+
   // ==========================================================================
   // ENDPOINTS
   // ==========================================================================

@@ -89,6 +89,9 @@ class LearningSession(Base):
 
 class DailyGoal(Base):
     __tablename__ = "daily_goals"
+    __table_args__ = (
+        Index("ix_daily_goals_child_id", "child_id"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     child_id: Mapped[int] = mapped_column(Integer, ForeignKey("child_profiles.id"), nullable=False)

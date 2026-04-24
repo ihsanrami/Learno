@@ -1,11 +1,11 @@
 /// =============================================================================
 /// STT Service - Speech-to-Text for Learno
 /// =============================================================================
-/// 🆕 NEW FILE
-///
 /// Handles voice input - captures child's spoken answers.
+/// Supports locale switching for bilingual (English/Arabic) sessions.
 /// =============================================================================
 
+import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
@@ -19,11 +19,20 @@ class STTService {
   bool _isInitialized = false;
   bool _isListening = false;
 
+  // Active locale — updated via setLocale() when app language changes.
+  String _localeId = 'en_US';
+
   // Callbacks
   Function(String text, bool isFinal)? onResult;
   Function(String error)? onError;
   Function()? onListeningStarted;
   Function()? onListeningStopped;
+
+  /// Switch the recognition locale.  Call this whenever the app language changes.
+  /// [languageCode] should be 'en' or 'ar'.
+  void setLocale(String languageCode) {
+    _localeId = languageCode == 'ar' ? 'ar_SA' : 'en_US';
+  }
 
   /// Initialize STT
   Future<bool> init() async {
@@ -36,12 +45,12 @@ class STTService {
       );
       return _isInitialized;
     } catch (e) {
-      print('❌ STT init error: $e');
+      debugPrint('STT init error: $e');
       return false;
     }
   }
 
-  /// Start listening
+  /// Start listening using the current locale.
   Future<void> startListening() async {
     if (!_isInitialized) {
       final success = await init();
@@ -59,13 +68,13 @@ class STTService {
         listenFor: const Duration(seconds: 30),
         pauseFor: const Duration(seconds: 3),
         partialResults: true,
-        localeId: 'en_US',
+        localeId: _localeId,
         listenMode: ListenMode.confirmation,
       );
       _isListening = true;
       onListeningStarted?.call();
     } catch (e) {
-      print('❌ STT listen error: $e');
+      debugPrint('STT listen error: $e');
       onError?.call(e.toString());
     }
   }
@@ -78,7 +87,7 @@ class STTService {
       _isListening = false;
       onListeningStopped?.call();
     } catch (e) {
-      print('❌ STT stop error: $e');
+      debugPrint('STT stop error: $e');
     }
   }
 
@@ -89,7 +98,7 @@ class STTService {
       _isListening = false;
       onListeningStopped?.call();
     } catch (e) {
-      print('❌ STT cancel error: $e');
+      debugPrint('STT cancel error: $e');
     }
   }
 
@@ -116,6 +125,7 @@ class STTService {
 
   bool get isListening => _isListening;
   bool get isAvailable => _isInitialized;
+  String get currentLocale => _localeId;
 
   Future<void> dispose() async {
     await stopListening();

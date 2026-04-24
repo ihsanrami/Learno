@@ -7,6 +7,7 @@
 import '../models/enums.dart';
 import '../models/chat_message.dart';
 import '../api/dto.dart';
+import '../providers/interaction_mode.dart';
 
 // Re-export ChatMessage for backward compatibility
 export '../models/chat_message.dart';
@@ -127,9 +128,12 @@ class SessionState {
     }
   }
 
-  /// Toggle voice mode
+  /// Toggle voice mode — keeps interactionMode provider in sync.
   static void toggleVoiceMode() {
     isVoiceMode = !isVoiceMode;
+    interactionMode.setMode(
+      isVoiceMode ? InteractionMode.voice : InteractionMode.text,
+    );
   }
 
   /// Get progress percentage

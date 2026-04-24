@@ -123,7 +123,7 @@ class ConversationController extends ChangeNotifier {
     
     _stt.onError = (error) {
       interactionMode.onListeningStopped();
-      print('STT Error: $error');
+      debugPrint('STT Error: $error');
     };
   }
 
@@ -403,28 +403,32 @@ class ConversationController extends ChangeNotifier {
 
   Future<void> _handleSilence() async {
     if (_state == ConversationState.loading || _silenceHandled) return;
-    
+
     _silenceHandled = true;
     _setState(ConversationState.loading);
-    
+
     try {
       final response = await ApiService.notifySilence(
         ApiConfig.silenceThresholdSeconds.toDouble(),
       );
-      
+
+      // If user sent a message while the API call was in flight,
+      // sendMessage() will have set _silenceHandled = false — discard the hint.
+      if (!_silenceHandled) return;
+
       final hint = response.learnoResponse;
       if (hint == null) {
         _setState(ConversationState.waitingForInput);
         return;
       }
-      
+
       _setState(ConversationState.idle);
       _enqueueResponse(hint);
 
       // Reset for next silence (happens after sequence completes via _handleAfterSequenceComplete)
       _silenceHandled = false;
       _startSilenceTimer();
-      
+
     } catch (e) {
       _setState(ConversationState.waitingForInput);
     }
@@ -443,21 +447,6 @@ class ConversationController extends ChangeNotifier {
       'question',
     ];
     return questionTypes.contains(responseType);
-  }
-
-  void _addLearnoMessage(LearnoResponse response) {
-    _messages.add(ChatMessage(
-      text: response.text,
-      isUser: false,
-      responseType: response.responseType,
-      imageUrl: response.generatedImageUrl,
-    ));
-    SessionState.addLearnoMessage(
-      response.text,
-      response.responseType,
-      imageUrl: response.generatedImageUrl,
-    );
-    notifyListeners();
   }
 
   void _addUserMessage(String text, {bool isVoice = false}) {

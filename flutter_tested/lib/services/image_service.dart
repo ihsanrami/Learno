@@ -38,7 +38,7 @@ class ImageService {
     } catch (e) {
       _loadingStates[url] = false;
       _errorStates[url] = true;
-      print('❌ Image preload error: $e');
+      debugPrint('Image preload error: $e');
     }
   }
 
