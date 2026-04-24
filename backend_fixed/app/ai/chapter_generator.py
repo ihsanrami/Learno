@@ -9,6 +9,8 @@ Results are cached in-memory with key (grade, subject, topic_id).
 
 import json
 import logging
+import time
+from collections import OrderedDict
 from typing import Dict, Optional, Tuple
 
 from app.models.lesson_content import (
@@ -19,8 +21,25 @@ from app.utils.exceptions import AIServiceError
 
 logger = logging.getLogger(__name__)
 
+_CACHE_MAX_SIZE = 100   # max cached chapters (80 total curriculum topics)
+_CACHE_TTL = 86400      # 24 hours in seconds
+
 # Cache key: (grade: int, subject: str, topic_id: str)
-_chapter_cache: Dict[Tuple[int, str, str], ChapterContent] = {}
+# Value: (ChapterContent, expires_at_monotonic)
+_chapter_cache: OrderedDict[Tuple[int, str, str], Tuple[ChapterContent, float]] = OrderedDict()
+_cache_hits = 0
+_cache_misses = 0
+
+
+def get_cache_stats() -> dict:
+    total = _cache_hits + _cache_misses
+    return {
+        "size": len(_chapter_cache),
+        "max_size": _CACHE_MAX_SIZE,
+        "hits": _cache_hits,
+        "misses": _cache_misses,
+        "hit_rate_pct": round(_cache_hits / total * 100, 1) if total > 0 else 0.0,
+    }
 
 
 # =============================================================================
@@ -34,12 +53,22 @@ def generate_chapter(
     topic_name: str,
 ) -> ChapterContent:
     """Return a ChapterContent for the given topic, generating via GPT-4 if not cached."""
+    global _cache_hits, _cache_misses
+
     cache_key = (grade, subject.lower(), topic_id)
+    now = time.monotonic()
 
     if cache_key in _chapter_cache:
-        logger.info(f"Chapter cache hit: {cache_key}")
-        return _chapter_cache[cache_key]
+        chapter, expires_at = _chapter_cache[cache_key]
+        if now < expires_at:
+            _cache_hits += 1
+            _chapter_cache.move_to_end(cache_key)  # LRU: mark as recently used
+            logger.info(f"Chapter cache hit: {cache_key}")
+            return chapter
+        # Expired entry — remove and regenerate
+        del _chapter_cache[cache_key]
 
+    _cache_misses += 1
     logger.info(f"Generating chapter via GPT-4: {cache_key}")
 
     from app.ai.openai_client import get_ai_client
@@ -55,13 +84,20 @@ def generate_chapter(
         logger.exception(f"Chapter generation failed for {cache_key}: {exc}")
         chapter = _make_fallback_chapter(grade, subject, topic_id, topic_name)
 
-    _chapter_cache[cache_key] = chapter
+    # Evict oldest entry if at capacity
+    if len(_chapter_cache) >= _CACHE_MAX_SIZE:
+        _chapter_cache.popitem(last=False)
+
+    _chapter_cache[cache_key] = (chapter, now + _CACHE_TTL)
     return chapter
 
 
 def clear_cache() -> None:
     """Clear the in-memory chapter cache (useful for testing)."""
+    global _cache_hits, _cache_misses
     _chapter_cache.clear()
+    _cache_hits = 0
+    _cache_misses = 0
 
 
 # =============================================================================

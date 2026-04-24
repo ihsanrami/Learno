@@ -11,9 +11,13 @@ Changes:
 =============================================================================
 """
 
+import logging
 import os
+import time
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
@@ -31,6 +35,14 @@ from app.utils.exceptions import (
     LessonNotAvailableError,
     AIServiceError
 )
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+_start_time = time.time()
 
 # =============================================================================
 # Create FastAPI Application
@@ -50,6 +62,23 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+
+@app.middleware("http")
+async def log_slow_requests(request: Request, call_next):
+    t0 = time.perf_counter()
+    response = await call_next(request)
+    elapsed_ms = (time.perf_counter() - t0) * 1000
+    if elapsed_ms > 1000:
+        logger.warning(
+            "SLOW REQUEST %.0fms %s %s",
+            elapsed_ms,
+            request.method,
+            request.url.path,
+        )
+    return response
+
 
 @app.on_event("startup")
 async def startup():
@@ -57,6 +86,7 @@ async def startup():
     from app.database.base import Base
     import app.auth.models  # noqa: F401 — register all models including analytics
     Base.metadata.create_all(bind=engine)
+    logger.info("Learno backend started (v2.0.0)")
 
 # =============================================================================
 # Static Files (proxied AI-generated images)
@@ -181,10 +211,31 @@ async def root():
 
 @app.get("/health")
 async def health_check():
+    from app.ai.chapter_generator import get_cache_stats
+    uptime_seconds = int(time.time() - _start_time)
     return {
         "status": "success",
         "message": "Service is healthy",
-        "data": None
+        "data": {
+            "version": "2.0.0",
+            "uptime_seconds": uptime_seconds,
+            "chapter_cache": get_cache_stats(),
+        },
+    }
+
+
+@app.get("/api/v1/health")
+async def api_health_check():
+    from app.ai.chapter_generator import get_cache_stats
+    uptime_seconds = int(time.time() - _start_time)
+    return {
+        "status": "success",
+        "message": "Service is healthy",
+        "data": {
+            "version": "2.0.0",
+            "uptime_seconds": uptime_seconds,
+            "chapter_cache": get_cache_stats(),
+        },
     }
 
 

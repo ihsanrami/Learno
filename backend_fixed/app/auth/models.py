@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, JSON, String
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, Integer, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 
@@ -35,6 +35,9 @@ class Parent(Base):
 
 class ChildProfile(Base):
     __tablename__ = "child_profiles"
+    __table_args__ = (
+        Index("ix_child_profiles_parent_id", "parent_id"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     parent_id: Mapped[int] = mapped_column(Integer, ForeignKey("parents.id"), nullable=False)
@@ -60,6 +63,10 @@ class ChildProfile(Base):
 
 class LearningSession(Base):
     __tablename__ = "learning_sessions"
+    __table_args__ = (
+        Index("ix_learning_sessions_child_id", "child_id"),
+        Index("ix_learning_sessions_child_started", "child_id", "started_at"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     child_id: Mapped[int] = mapped_column(Integer, ForeignKey("child_profiles.id"), nullable=False)
@@ -96,6 +103,9 @@ class DailyGoal(Base):
 
 class Achievement(Base):
     __tablename__ = "achievements"
+    __table_args__ = (
+        Index("ix_achievements_child_id", "child_id"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     child_id: Mapped[int] = mapped_column(Integer, ForeignKey("child_profiles.id"), nullable=False)
@@ -113,6 +123,9 @@ class Achievement(Base):
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
+    __table_args__ = (
+        Index("ix_refresh_tokens_expires_at", "expires_at"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     parent_id: Mapped[int] = mapped_column(Integer, ForeignKey("parents.id"), nullable=False)

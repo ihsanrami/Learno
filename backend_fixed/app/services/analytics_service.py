@@ -94,31 +94,33 @@ def get_child_overview(db: Session, child_id: int) -> dict:
     today_start = datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
     today_end = today_start + timedelta(days=1)
 
-    today_sessions = (
+    # Single query for all sessions — compute today/all-time in Python
+    all_sessions = (
         db.query(LearningSession)
-        .filter(
-            LearningSession.child_id == child_id,
-            LearningSession.started_at >= today_start,
-            LearningSession.started_at < today_end,
-        )
+        .filter(LearningSession.child_id == child_id)
         .all()
     )
 
+    def _tz(dt):
+        return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
+
+    today_sessions = [s for s in all_sessions if today_start <= _tz(s.started_at) < today_end]
+
     today_minutes = sum(s.duration_seconds for s in today_sessions) // 60
-    today_lessons = len([s for s in today_sessions if s.completed])
+    today_lessons = sum(1 for s in today_sessions if s.completed)
     today_correct = sum(s.questions_correct for s in today_sessions)
     today_total = sum(s.questions_total for s in today_sessions)
     today_accuracy = (today_correct / today_total * 100) if today_total > 0 else 0.0
 
-    streak = _calculate_streak(db, child_id)
     goal = _get_active_goal(db, child_id)
     target_minutes = goal.target_minutes if goal else 15
 
-    all_sessions = db.query(LearningSession).filter(LearningSession.child_id == child_id).all()
     total_correct = sum(s.questions_correct for s in all_sessions)
     total_questions = sum(s.questions_total for s in all_sessions)
     overall_accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0.0
     total_minutes = sum(s.duration_seconds for s in all_sessions) // 60
+
+    streak = _calculate_streak(db, child_id)
 
     return {
         "today_minutes": today_minutes,
@@ -127,7 +129,7 @@ def get_child_overview(db: Session, child_id: int) -> dict:
         "streak_days": streak,
         "target_minutes": target_minutes,
         "goal_progress_percent": min(100, int(today_minutes / target_minutes * 100)) if target_minutes > 0 else 0,
-        "total_lessons": len([s for s in all_sessions if s.completed]),
+        "total_lessons": sum(1 for s in all_sessions if s.completed),
         "overall_accuracy": round(overall_accuracy, 1),
         "total_learning_minutes": total_minutes,
     }
@@ -135,31 +137,36 @@ def get_child_overview(db: Session, child_id: int) -> dict:
 
 def get_weekly_activity(db: Session, child_id: int, days: int = 7) -> list:
     now = datetime.now(timezone.utc)
-    result = []
+    window_start = datetime(
+        (now - timedelta(days=days - 1)).year,
+        (now - timedelta(days=days - 1)).month,
+        (now - timedelta(days=days - 1)).day,
+        tzinfo=timezone.utc,
+    )
 
+    sessions = (
+        db.query(LearningSession)
+        .filter(
+            LearningSession.child_id == child_id,
+            LearningSession.started_at >= window_start,
+        )
+        .all()
+    )
+
+    def _tz(dt):
+        return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
+
+    result = []
     for i in range(days - 1, -1, -1):
         day = now - timedelta(days=i)
         day_start = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
         day_end = day_start + timedelta(days=1)
-
-        sessions = (
-            db.query(LearningSession)
-            .filter(
-                LearningSession.child_id == child_id,
-                LearningSession.started_at >= day_start,
-                LearningSession.started_at < day_end,
-            )
-            .all()
-        )
-
-        minutes = sum(s.duration_seconds for s in sessions) // 60
-        lessons = len([s for s in sessions if s.completed])
-
+        day_sessions = [s for s in sessions if day_start <= _tz(s.started_at) < day_end]
         result.append({
             "date": day_start.date().isoformat(),
             "day_label": day_start.strftime("%a"),
-            "minutes": minutes,
-            "lessons_completed": lessons,
+            "minutes": sum(s.duration_seconds for s in day_sessions) // 60,
+            "lessons_completed": sum(1 for s in day_sessions if s.completed),
         })
 
     return result
@@ -346,26 +353,27 @@ def _get_active_goal(db: Session, child_id: int) -> Optional[DailyGoal]:
 
 
 def _calculate_streak(db: Session, child_id: int) -> int:
+    """Calculate consecutive-day streak using a single DB query."""
     now = datetime.now(timezone.utc)
-    streak = 0
+    cutoff = now - timedelta(days=365)
 
-    for i in range(365):
-        day = now - timedelta(days=i)
-        day_start = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
-        day_end = day_start + timedelta(days=1)
-
-        count = (
-            db.query(LearningSession)
-            .filter(
-                LearningSession.child_id == child_id,
-                LearningSession.completed == True,
-                LearningSession.started_at >= day_start,
-                LearningSession.started_at < day_end,
-            )
-            .count()
+    rows = (
+        db.query(func.date(LearningSession.started_at).label("day"))
+        .filter(
+            LearningSession.child_id == child_id,
+            LearningSession.completed == True,
+            LearningSession.started_at >= cutoff,
         )
+        .distinct()
+        .all()
+    )
 
-        if count > 0:
+    days_with_lessons = {str(row.day) for row in rows}
+
+    streak = 0
+    for i in range(365):
+        day = (now - timedelta(days=i)).date()
+        if str(day) in days_with_lessons:
             streak += 1
         else:
             break

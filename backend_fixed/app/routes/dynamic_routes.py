@@ -10,7 +10,7 @@ Routes for Dynamic Lesson System - FIXED VERSION
 
 import logging
 import re
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, validator
 from typing import List, Optional
 
@@ -19,6 +19,7 @@ from app.models.curriculum import (
     get_topics, GradeLevel, SubjectType,
     GRADE_DISPLAY_NAMES, get_grade_display_name,
 )
+from app.rate_limiter import limiter
 from app.utils.exceptions import InvalidInputError
 
 logger = logging.getLogger(__name__)
@@ -178,20 +179,21 @@ session_router = APIRouter(prefix="/session", tags=["Session Management"])
 
 
 @session_router.post("/start", response_model=StartSessionResponse)
-async def start_session(request: StartSessionRequest):
+@limiter.limit("30/minute")
+async def start_session(request: Request, body: StartSessionRequest):
     """Start a new comprehensive lesson."""
     logger.info(
-        f"Starting lesson: student={request.student_id}, "
-        f"grade={request.grade}, subject={request.subject}, lesson={request.lesson}"
+        f"Starting lesson: student={body.student_id}, "
+        f"grade={body.grade}, subject={body.subject}, lesson={body.lesson}"
     )
-    
+
     service = get_dynamic_lesson_service()
 
     session, response = service.start_lesson(
-        grade=request.grade,
-        subject=request.subject,
-        lesson=request.lesson,
-        child_id=request.child_id,
+        grade=body.grade,
+        subject=body.subject,
+        lesson=body.lesson,
+        child_id=body.child_id,
     )
     
     progress = None
@@ -226,12 +228,13 @@ async def start_session(request: StartSessionRequest):
 
 
 @session_router.post("/end", response_model=EndSessionResponse)
-async def end_session(request: EndSessionRequest):
+@limiter.limit("60/minute")
+async def end_session(request: Request, body: EndSessionRequest):
     """End the lesson session."""
-    logger.info(f"Ending session: {request.session_id}")
-    
+    logger.info(f"Ending session: {body.session_id}")
+
     service = get_dynamic_lesson_service()
-    summary, message = service.end_lesson(request.session_id)
+    summary, message = service.end_lesson(body.session_id)
     
     return EndSessionResponse(
         status="success",
@@ -253,12 +256,13 @@ lesson_router = APIRouter(prefix="/lesson", tags=["Lesson Interaction"])
 
 
 @lesson_router.post("/continue", response_model=DynamicLessonResponse)
-async def continue_teaching(request: ContinueRequest):
+@limiter.limit("60/minute")
+async def continue_teaching(request: Request, body: ContinueRequest):
     """Continue to next teaching step."""
-    logger.info(f"Continuing lesson: {request.session_id}")
-    
+    logger.info(f"Continuing lesson: {body.session_id}")
+
     service = get_dynamic_lesson_service()
-    response = service.continue_teaching(request.session_id)
+    response = service.continue_teaching(body.session_id)
     
     progress = None
     if response.progress_info:
@@ -292,14 +296,15 @@ async def continue_teaching(request: ContinueRequest):
 
 
 @lesson_router.post("/respond", response_model=DynamicLessonResponse)
-async def respond_to_question(request: ChildResponseRequest):
+@limiter.limit("60/minute")
+async def respond_to_question(request: Request, body: ChildResponseRequest):
     """Process child's answer to a question."""
-    logger.info(f"Processing response: {request.session_id}")
-    
+    logger.info(f"Processing response: {body.session_id}")
+
     service = get_dynamic_lesson_service()
     response = service.process_response(
-        session_id=request.session_id,
-        transcript=request.transcript
+        session_id=body.session_id,
+        transcript=body.transcript
     )
     
     progress = None
@@ -334,14 +339,15 @@ async def respond_to_question(request: ChildResponseRequest):
 
 
 @lesson_router.post("/silence", response_model=DynamicLessonResponse)
-async def handle_silence(request: SilenceNotificationRequest):
+@limiter.limit("30/minute")
+async def handle_silence(request: Request, body: SilenceNotificationRequest):
     """Handle when child is silent for too long."""
-    logger.info(f"Handling silence: {request.session_id} - {request.silence_duration}s")
-    
+    logger.info(f"Handling silence: {body.session_id} - {body.silence_duration}s")
+
     service = get_dynamic_lesson_service()
     response = service.handle_silence(
-        session_id=request.session_id,
-        duration=request.silence_duration
+        session_id=body.session_id,
+        duration=body.silence_duration
     )
     
     progress = None
