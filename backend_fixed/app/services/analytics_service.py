@@ -10,6 +10,12 @@ from app.auth.models import LearningSession, DailyGoal, Achievement, ChildProfil
 
 logger = logging.getLogger(__name__)
 
+
+def _tz(dt: datetime) -> datetime:
+    """Return dt as timezone-aware UTC, regardless of whether it's naive or aware."""
+    return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
+
+
 ACHIEVEMENT_DEFINITIONS = {
     "first_lesson": {
         "title": "First Steps!",
@@ -101,9 +107,6 @@ def get_child_overview(db: Session, child_id: int) -> dict:
         .all()
     )
 
-    def _tz(dt):
-        return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
-
     today_sessions = [s for s in all_sessions if today_start <= _tz(s.started_at) < today_end]
 
     today_minutes = sum(s.duration_seconds for s in today_sessions) // 60
@@ -152,9 +155,6 @@ def get_weekly_activity(db: Session, child_id: int, days: int = 7) -> list:
         )
         .all()
     )
-
-    def _tz(dt):
-        return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
 
     result = []
     for i in range(days - 1, -1, -1):
@@ -283,7 +283,7 @@ def check_and_award_achievements(db: Session, child_id: int) -> list:
     today = datetime.now(timezone.utc).date()
     today_completed = [
         s for s in completed_sessions
-        if s.started_at.replace(tzinfo=timezone.utc).date() == today
+        if _tz(s.started_at).date() == today
     ]
     if len(today_completed) >= 3:
         _award("speed_learner")

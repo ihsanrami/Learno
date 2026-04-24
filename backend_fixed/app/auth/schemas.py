@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 
 # ---------- Auth ----------
@@ -10,6 +10,13 @@ class ParentRegister(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
     full_name: str = Field(min_length=1, max_length=100)
+
+    @field_validator("full_name", mode="before")
+    @classmethod
+    def full_name_not_blank(cls, v: str) -> str:
+        if not str(v).strip():
+            raise ValueError("full_name must not be blank or whitespace-only")
+        return v
 
 
 class ParentLogin(BaseModel):

@@ -4,7 +4,7 @@ Session Service for Learno Educational Backend
 
 import logging
 from typing import Optional, Dict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 
 from app.config import settings
@@ -21,17 +21,17 @@ class Session:
         self.grade = grade
         self.subject = subject
         self.lesson = lesson
-        self.created_at = datetime.now()
-        self.last_activity = datetime.now()
+        self.created_at = datetime.now(timezone.utc)
+        self.last_activity = datetime.now(timezone.utc)
         self.total_steps = 0
         self.is_complete = False
     
     def update_activity(self):
-        self.last_activity = datetime.now()
-    
+        self.last_activity = datetime.now(timezone.utc)
+
     def is_expired(self) -> bool:
         timeout = timedelta(seconds=settings.SESSION_TIMEOUT_SECONDS)
-        return datetime.now() - self.last_activity > timeout
+        return datetime.now(timezone.utc) - self.last_activity > timeout
 
 
 class SessionService:

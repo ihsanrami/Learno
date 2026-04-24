@@ -29,6 +29,10 @@ class Settings:
 
     # JWT — MUST be overridden via JWT_SECRET_KEY env var in production
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", secrets.token_hex(32))
+
+    # CORS — set ALLOWED_ORIGINS to a comma-separated list for production
+    # e.g. ALLOWED_ORIGINS=https://app.learno.com,https://www.learno.com
+    ALLOWED_ORIGINS: list = os.getenv("ALLOWED_ORIGINS", "*").split(",")
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7

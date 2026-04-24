@@ -7,7 +7,7 @@ preventing display failures when DALL-E URLs expire after ~1 hour.
 import uuid
 import logging
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import httpx
@@ -69,12 +69,12 @@ def cleanup_old_images(days: int = 7) -> None:
     if not STATIC_DIR.exists():
         return
 
-    cutoff = datetime.now() - timedelta(days=days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     deleted = 0
 
     for f in STATIC_DIR.glob("*.png"):
         try:
-            if datetime.fromtimestamp(f.stat().st_mtime) < cutoff:
+            if datetime.fromtimestamp(f.stat().st_mtime, tz=timezone.utc) < cutoff:
                 f.unlink()
                 deleted += 1
         except Exception:

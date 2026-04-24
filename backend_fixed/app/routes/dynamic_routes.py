@@ -11,7 +11,7 @@ Routes for Dynamic Lesson System - FIXED VERSION
 import logging
 import re
 from fastapi import APIRouter, Query, Request
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 from typing import List, Optional
 
 from app.services.dynamic_lesson_service import get_dynamic_lesson_service
@@ -39,33 +39,37 @@ class StartSessionRequest(BaseModel):
     force_new: bool = False
     child_id: Optional[int] = None
     
-    @validator('student_id')
+    @field_validator('student_id', mode='before')
+    @classmethod
     def validate_student_id(cls, v):
-        if not v or not v.strip():
+        if not v or not str(v).strip():
             return "default"
-        return re.sub(r'[<>"\'/\\]', '', v.strip())[:100]
-    
-    @validator('student_name')
+        return re.sub(r'[<>"\'/\\]', '', str(v).strip())[:100]
+
+    @field_validator('student_name', mode='before')
+    @classmethod
     def validate_student_name(cls, v):
-        if not v or not v.strip():
+        if not v or not str(v).strip():
             return "Student"
-        return re.sub(r'[<>"\'/\\]', '', v.strip())[:50]
-    
-    @validator('subject', 'lesson')
+        return re.sub(r'[<>"\'/\\]', '', str(v).strip())[:50]
+
+    @field_validator('subject', 'lesson', mode='before')
+    @classmethod
     def validate_strings(cls, v):
-        if not v or not v.strip():
+        if not v or not str(v).strip():
             raise ValueError("Field cannot be empty")
-        return re.sub(r'[<>"\'/\\]', '', v.strip())[:100]
+        return re.sub(r'[<>"\'/\\]', '', str(v).strip())[:100]
 
 
 class ContinueRequest(BaseModel):
     session_id: str
-    
-    @validator('session_id')
+
+    @field_validator('session_id', mode='before')
+    @classmethod
     def validate_session_id(cls, v):
-        if not v or not v.strip():
+        if not v or not str(v).strip():
             raise ValueError("session_id is required")
-        return v.strip()
+        return str(v).strip()
 
 
 class ChildResponseRequest(BaseModel):
@@ -74,11 +78,12 @@ class ChildResponseRequest(BaseModel):
     confidence: Optional[float] = None
     duration: Optional[float] = None
     
-    @validator('transcript')
+    @field_validator('transcript', mode='before')
+    @classmethod
     def validate_transcript(cls, v):
-        if not v or not v.strip():
+        if not v or not str(v).strip():
             raise ValueError("transcript is required")
-        cleaned = re.sub(r'[<>]', '', v.strip())
+        cleaned = re.sub(r'[<>]', '', str(v).strip())
         return cleaned[:500]
 
 
@@ -86,8 +91,10 @@ class SilenceNotificationRequest(BaseModel):
     session_id: str
     silence_duration: float
     
-    @validator('silence_duration')
+    @field_validator('silence_duration', mode='before')
+    @classmethod
     def validate_duration(cls, v):
+        v = float(v)
         if v <= 0:
             raise ValueError("silence_duration must be positive")
         if v > 300:

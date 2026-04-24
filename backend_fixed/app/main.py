@@ -14,6 +14,7 @@ Changes:
 import logging
 import os
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -50,13 +51,25 @@ _start_time = time.time()
 
 from app.rate_limiter import limiter
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from app.database.session import engine
+    from app.database.base import Base
+    import app.auth.models  # noqa: F401 — register all models including analytics
+    Base.metadata.create_all(bind=engine)
+    logger.info("Learno backend started (v2.0.0)")
+    yield
+
+
 app = FastAPI(
     title=settings.APP_TITLE,
     description="AI-powered educational backend with comprehensive teaching",
     version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 
 app.state.limiter = limiter
@@ -80,14 +93,6 @@ async def log_slow_requests(request: Request, call_next):
     return response
 
 
-@app.on_event("startup")
-async def startup():
-    from app.database.session import engine
-    from app.database.base import Base
-    import app.auth.models  # noqa: F401 — register all models including analytics
-    Base.metadata.create_all(bind=engine)
-    logger.info("Learno backend started (v2.0.0)")
-
 # =============================================================================
 # Static Files (proxied AI-generated images)
 # =============================================================================
@@ -99,10 +104,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # CORS Middleware
 # =============================================================================
 
+_origins = settings.ALLOWED_ORIGINS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_origins,
+    # allow_credentials requires specific origins (not wildcard) per CORS spec.
+    # When ALLOWED_ORIGINS is restricted in production, credentials work correctly.
+    allow_credentials=("*" not in _origins),
     allow_methods=["*"],
     allow_headers=["*"],
 )
