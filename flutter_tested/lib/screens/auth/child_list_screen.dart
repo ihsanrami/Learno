@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../services/auth_service.dart';
+import '../../utils/grade_utils.dart';
 import '../grades.dart';
 import 'add_child_screen.dart';
 import 'parent_profile_screen.dart';
@@ -65,6 +67,7 @@ class _ChildListScreenState extends State<ChildListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final children = _controller.children;
     final parent = _controller.currentParent;
 
@@ -88,15 +91,15 @@ class _ChildListScreenState extends State<ChildListScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Hi, ${parent?.fullName.split(' ').first ?? 'there'}!',
+                              l10n.hiName(parent?.fullName.split(' ').first ?? 'there'),
                               style: const TextStyle(
                                 fontSize: 15,
                                 color: Color(0xFF76310F),
                               ),
                             ),
-                            const Text(
-                              'Who is learning today?',
-                              style: TextStyle(
+                            Text(
+                              l10n.whoIsLearningToday,
+                              style: const TextStyle(
                                 fontFamily: 'Recoleta',
                                 fontWeight: FontWeight.w900,
                                 fontSize: 26,
@@ -120,8 +123,8 @@ class _ChildListScreenState extends State<ChildListScreen> {
                 const SizedBox(height: 20),
                 Expanded(
                   child: children.isEmpty
-                      ? _buildEmpty()
-                      : _buildGrid(children),
+                      ? _buildEmpty(l10n)
+                      : _buildGrid(children, l10n),
                 ),
               ],
             ),
@@ -131,19 +134,16 @@ class _ChildListScreenState extends State<ChildListScreen> {
     );
   }
 
-  Widget _buildEmpty() {
+  Widget _buildEmpty(AppLocalizations l10n) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            '🦊',
-            style: TextStyle(fontSize: 60),
-          ),
+          const Text('🦊', style: TextStyle(fontSize: 60)),
           const SizedBox(height: 16),
-          const Text(
-            'No learners yet!',
-            style: TextStyle(
+          Text(
+            l10n.noLearnersYet,
+            style: const TextStyle(
               fontFamily: 'Recoleta',
               fontWeight: FontWeight.w900,
               fontSize: 24,
@@ -151,15 +151,15 @@ class _ChildListScreenState extends State<ChildListScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Add a child profile to get started',
-            style: TextStyle(color: Color(0xFF76310F), fontSize: 15),
+          Text(
+            l10n.addChildToGetStarted,
+            style: const TextStyle(color: Color(0xFF76310F), fontSize: 15),
           ),
           const SizedBox(height: 32),
           ElevatedButton.icon(
             onPressed: _openAddChild,
             icon: const Icon(Icons.add),
-            label: const Text('Add Child'),
+            label: Text(l10n.addChild),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFF8D00),
               foregroundColor: const Color(0xFF44200B),
@@ -179,7 +179,7 @@ class _ChildListScreenState extends State<ChildListScreen> {
     );
   }
 
-  Widget _buildGrid(List<ChildModel> children) {
+  Widget _buildGrid(List<ChildModel> children, AppLocalizations l10n) {
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -191,16 +191,16 @@ class _ChildListScreenState extends State<ChildListScreen> {
       itemCount: children.length + 1,
       itemBuilder: (context, index) {
         if (index == children.length) {
-          return _buildAddCard();
+          return _buildAddCard(l10n);
         }
-        return _buildChildCard(children[index]);
+        return _buildChildCard(children[index], l10n);
       },
     );
   }
 
-  Widget _buildChildCard(ChildModel child) {
+  Widget _buildChildCard(ChildModel child, AppLocalizations l10n) {
     final emoji = _avatarEmojis[child.avatar] ?? '🦊';
-    final gradeLabel = _gradeLabel(child.grade);
+    final gradeLabel = localizedGradeLabel(child.grade, l10n);
 
     return GestureDetector(
       onTap: () => _selectChild(child),
@@ -222,8 +222,8 @@ class _ChildListScreenState extends State<ChildListScreen> {
             Container(
               width: 72,
               height: 72,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF7CDA5),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF7CDA5),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -244,7 +244,7 @@ class _ChildListScreenState extends State<ChildListScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              '${child.age} yrs · $gradeLabel',
+              l10n.childAgeYrsGrade(child.age, gradeLabel),
               style: const TextStyle(
                 fontSize: 12,
                 color: Color(0xFF76310F),
@@ -256,7 +256,7 @@ class _ChildListScreenState extends State<ChildListScreen> {
     );
   }
 
-  Widget _buildAddCard() {
+  Widget _buildAddCard(AppLocalizations l10n) {
     return GestureDetector(
       onTap: _openAddChild,
       child: Container(
@@ -269,15 +269,15 @@ class _ChildListScreenState extends State<ChildListScreen> {
             style: BorderStyle.solid,
           ),
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_circle_outline,
+            const Icon(Icons.add_circle_outline,
                 color: Color(0xFFFF8D00), size: 44),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
-              'Add Child',
-              style: TextStyle(
+              l10n.addChild,
+              style: const TextStyle(
                 fontFamily: 'Recoleta',
                 fontWeight: FontWeight.w900,
                 fontSize: 16,
@@ -288,22 +288,5 @@ class _ChildListScreenState extends State<ChildListScreen> {
         ),
       ),
     );
-  }
-}
-
-String _gradeLabel(String grade) {
-  switch (grade) {
-    case 'kindergarten':
-      return 'Kindergarten';
-    case 'first':
-      return '1st Grade';
-    case 'second':
-      return '2nd Grade';
-    case 'third':
-      return '3rd Grade';
-    case 'fourth':
-      return '4th Grade';
-    default:
-      return grade;
   }
 }

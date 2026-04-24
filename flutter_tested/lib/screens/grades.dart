@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../models/enums.dart';
 import '../core/session_state.dart';
@@ -9,6 +10,8 @@ class GradesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -18,23 +21,20 @@ class GradesScreen extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           ),
-
           SafeArea(
             child: Column(
               children: [
                 const SizedBox(height: 50),
-                const Text(
-                  'Grades',
-                  style: TextStyle(
+                Text(
+                  l10n.grades,
+                  style: const TextStyle(
                     fontFamily: 'Recoleta',
                     fontWeight: FontWeight.w900,
                     fontSize: 55,
                     color: Color(0xFF44200B),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 60),
@@ -44,33 +44,25 @@ class GradesScreen extends StatelessWidget {
                         image: 'assets/images/kindergarten.png',
                         grade: Grade.kindergarten,
                       ),
-
                       const SizedBox(height: 20),
-
                       _gradeButton(
                         context: context,
                         image: 'assets/images/first_grade.png',
                         grade: Grade.first,
                       ),
-
                       const SizedBox(height: 20),
-
                       _gradeButton(
                         context: context,
                         image: 'assets/images/second_grade.png',
                         grade: Grade.second,
                       ),
-
                       const SizedBox(height: 20),
-
                       _gradeButton(
                         context: context,
                         image: 'assets/images/third_grade.png',
                         grade: Grade.third,
                       ),
-
                       const SizedBox(height: 20),
-
                       _gradeButton(
                         context: context,
                         image: 'assets/images/fourth_grade.png',

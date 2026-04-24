@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../controllers/auth_controller.dart';
 import 'register_screen.dart';
@@ -54,6 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -76,10 +79,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Center(
+                    Center(
                       child: Text(
-                        'Welcome Back!',
-                        style: TextStyle(
+                        l10n.welcomeBack,
+                        style: const TextStyle(
                           fontFamily: 'Recoleta',
                           fontWeight: FontWeight.w900,
                           fontSize: 38,
@@ -88,10 +91,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Center(
+                    Center(
                       child: Text(
-                        'Sign in to continue',
-                        style: TextStyle(
+                        l10n.signInToContinue,
+                        style: const TextStyle(
                           fontSize: 15,
                           color: Color(0xFF76310F),
                         ),
@@ -103,19 +106,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           _buildTextField(
                             controller: _emailCtrl,
-                            label: 'Email',
+                            label: l10n.emailLabel,
                             icon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             validator: (v) {
-                              if (v == null || v.isEmpty) return 'Enter your email';
-                              if (!v.contains('@')) return 'Enter a valid email';
+                              if (v == null || v.isEmpty) return l10n.validationEnterEmail;
+                              if (!v.contains('@')) return l10n.validationInvalidEmail;
                               return null;
                             },
                           ),
                           const SizedBox(height: 16),
                           _buildTextField(
                             controller: _passwordCtrl,
-                            label: 'Password',
+                            label: l10n.passwordLabel,
                             icon: Icons.lock_outlined,
                             obscureText: _obscurePassword,
                             suffixIcon: IconButton(
@@ -129,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   () => _obscurePassword = !_obscurePassword),
                             ),
                             validator: (v) {
-                              if (v == null || v.isEmpty) return 'Enter your password';
+                              if (v == null || v.isEmpty) return l10n.validationEnterPassword;
                               return null;
                             },
                           ),
@@ -142,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                     const SizedBox(height: 24),
                     _buildPrimaryButton(
-                      label: 'Login',
+                      label: l10n.loginButton,
                       isLoading: _isLoading,
                       onPressed: _login,
                     ),
@@ -154,13 +157,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           MaterialPageRoute(builder: (_) => const RegisterScreen()),
                         ),
                         child: RichText(
-                          text: const TextSpan(
-                            text: "Don't have an account? ",
-                            style: TextStyle(color: Color(0xFF76310F), fontSize: 15),
+                          text: TextSpan(
+                            text: l10n.noAccountQuestion,
+                            style: const TextStyle(color: Color(0xFF76310F), fontSize: 15),
                             children: [
                               TextSpan(
-                                text: 'Register',
-                                style: TextStyle(
+                                text: l10n.registerLink,
+                                style: const TextStyle(
                                   color: Color(0xFFFF8D00),
                                   fontWeight: FontWeight.bold,
                                   decoration: TextDecoration.underline,
@@ -183,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// ---------- Shared auth widgets (inlined for independence) ----------
+// ---------- Shared auth widgets ----------
 
 Widget _buildCard({required Widget child}) {
   return Container(

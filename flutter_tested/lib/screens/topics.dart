@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../models/enums.dart';
 import '../core/session_state.dart';
@@ -19,7 +20,6 @@ class _TopicsScreenState extends State<TopicsScreen> {
   bool _isLoading = true;
   String? _errorMessage;
 
-  // Same color palette as the original math.dart
   static const List<Color> _topicColors = [
     Color(0xFFFCA311),
     Color(0xFF00BF63),
@@ -40,10 +40,9 @@ class _TopicsScreenState extends State<TopicsScreen> {
       _isLoading = true;
       _errorMessage = null;
     });
-
     try {
       final grade = _gradeToInt(SessionState.grade!);
-      final subject = SessionState.subject!.name; // "math", "science", etc.
+      final subject = SessionState.subject!.name;
       final topics = await ApiService.fetchTopics(grade, subject);
       setState(() {
         _topics = topics;
@@ -57,20 +56,21 @@ class _TopicsScreenState extends State<TopicsScreen> {
     }
   }
 
-  String _screenTitle() {
+  String _screenTitle(AppLocalizations l10n) {
     final subject = SessionState.subject;
-    if (subject == null) return 'Topics';
+    if (subject == null) return l10n.topics;
     switch (subject) {
-      case Subject.math:    return 'Math Topics';
-      case Subject.science: return 'Science Topics';
-      case Subject.english: return 'English Topics';
-      case Subject.arabic:  return 'Arabic Topics';
-      default:              return 'Topics';
+      case Subject.math:    return l10n.mathTopics;
+      case Subject.science: return l10n.scienceTopics;
+      case Subject.english: return l10n.englishTopics;
+      case Subject.arabic:  return l10n.arabicTopics;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -98,11 +98,9 @@ class _TopicsScreenState extends State<TopicsScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
                 Text(
-                  _screenTitle(),
+                  _screenTitle(l10n),
                   style: const TextStyle(
                     fontFamily: 'Recoleta',
                     fontWeight: FontWeight.w900,
@@ -110,20 +108,16 @@ class _TopicsScreenState extends State<TopicsScreen> {
                     color: Color(0xFF44200B),
                   ),
                 ),
-
                 const SizedBox(height: 18),
-
-                Expanded(child: _buildBody()),
-
+                Expanded(child: _buildBody(l10n)),
                 const SizedBox(height: 16),
-
                 if (!_isLoading && _errorMessage == null)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
-                      'Select a topic you want to start with,\nthen press Continue.',
+                      l10n.selectTopicHint,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'Recoleta',
                         fontWeight: FontWeight.w400,
                         fontSize: 17,
@@ -132,9 +126,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
                       ),
                     ),
                   ),
-
                 const SizedBox(height: 60),
-
                 if (!_isLoading && _errorMessage == null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 20),
@@ -150,7 +142,6 @@ class _TopicsScreenState extends State<TopicsScreen> {
                       ),
                     ),
                   ),
-
                 const SizedBox(height: 50),
               ],
             ),
@@ -160,7 +151,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(AppLocalizations l10n) {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(color: Color(0xFFFF8D00)),
@@ -177,7 +168,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
               const Icon(Icons.error_outline, color: Color(0xFF76310F), size: 48),
               const SizedBox(height: 12),
               Text(
-                'Could not load topics.\nPlease check your connection.',
+                l10n.couldNotLoadTopics,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Color(0xFF44200B),
@@ -194,7 +185,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                child: const Text('Try Again'),
+                child: Text(l10n.tryAgain),
               ),
             ],
           ),
@@ -203,10 +194,10 @@ class _TopicsScreenState extends State<TopicsScreen> {
     }
 
     if (_topics.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'No topics available.',
-          style: TextStyle(color: Color(0xFF44200B), fontSize: 16),
+          l10n.noTopicsAvailable,
+          style: const TextStyle(color: Color(0xFF44200B), fontSize: 16),
         ),
       );
     }
@@ -256,11 +247,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
                   ),
                 ),
                 if (isSelected)
-                  const Icon(
-                    Icons.check_circle,
-                    color: Colors.white,
-                    size: 26,
-                  ),
+                  const Icon(Icons.check_circle, color: Colors.white, size: 26),
               ],
             ),
           ),
@@ -272,7 +259,6 @@ class _TopicsScreenState extends State<TopicsScreen> {
   void _startLesson() {
     if (_selectedIndex == null || _selectedIndex! >= _topics.length) return;
     final topic = _topics[_selectedIndex!];
-    // Pass the English display name as the lesson identifier
     SessionState.lesson = topic.nameEn;
     Navigator.push(
       context,

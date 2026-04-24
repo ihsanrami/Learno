@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../services/parent_service.dart';
 
@@ -42,6 +43,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -52,8 +55,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildHeader(),
-                Expanded(child: _buildBody()),
+                _buildHeader(l10n),
+                Expanded(child: _buildBody(l10n)),
               ],
             ),
           ),
@@ -62,7 +65,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
@@ -73,7 +76,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           ),
           Expanded(
             child: Text(
-              '${widget.childName}\'s Achievements',
+              l10n.childAchievementsTitle(widget.childName),
               style: const TextStyle(
                 fontFamily: 'Recoleta',
                 fontWeight: FontWeight.w900,
@@ -87,7 +90,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(AppLocalizations l10n) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8D00)));
     }
@@ -101,7 +104,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             ElevatedButton(
               onPressed: _load,
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8D00)),
-              child: const Text('Retry', style: TextStyle(color: Colors.white)),
+              child: Text(l10n.retry, style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -116,11 +119,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSummaryCard(earned, achievements.length),
+          _buildSummaryCard(earned, achievements.length, l10n),
           const SizedBox(height: 16),
-          const Text(
-            'Badges',
-            style: TextStyle(
+          Text(
+            l10n.badgesTitle,
+            style: const TextStyle(
               fontFamily: 'Recoleta',
               fontWeight: FontWeight.w900,
               fontSize: 18,
@@ -138,14 +141,23 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               childAspectRatio: 0.85,
             ),
             itemCount: achievements.length,
-            itemBuilder: (_, i) => _buildBadge(achievements[i]),
+            itemBuilder: (_, i) => _buildBadge(achievements[i], l10n),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryCard(int earned, int total) {
+  Widget _buildSummaryCard(int earned, int total, AppLocalizations l10n) {
+    String subtitle;
+    if (earned == 0) {
+      subtitle = l10n.startLearningEarnBadges;
+    } else if (earned == total) {
+      subtitle = l10n.allBadgesCollected;
+    } else {
+      subtitle = l10n.moreBadgesToUnlock(total - earned);
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFFFEDDC),
@@ -167,7 +179,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '$earned / $total earned',
+                l10n.earnedBadgesCount(earned, total),
                 style: const TextStyle(
                   fontFamily: 'Recoleta',
                   fontWeight: FontWeight.w900,
@@ -176,11 +188,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 ),
               ),
               Text(
-                earned == 0
-                    ? 'Start learning to earn badges!'
-                    : earned == total
-                        ? 'All badges collected! 🎉'
-                        : '${total - earned} more to unlock',
+                subtitle,
                 style: const TextStyle(fontSize: 13, color: Color(0xFF76310F)),
               ),
             ],
@@ -190,12 +198,14 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     );
   }
 
-  Widget _buildBadge(AchievementItem achievement) {
+  Widget _buildBadge(AchievementItem achievement, AppLocalizations l10n) {
     final isEarned = achievement.earned;
 
     return Container(
       decoration: BoxDecoration(
-        color: isEarned ? const Color(0xFFFFEDDC) : const Color(0xFFFFEDDC).withOpacity(0.5),
+        color: isEarned
+            ? const Color(0xFFFFEDDC)
+            : const Color(0xFFFFEDDC).withOpacity(0.5),
         borderRadius: BorderRadius.circular(20),
         border: isEarned
             ? Border.all(color: const Color(0xFFFF8D00), width: 2)
@@ -242,7 +252,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            isEarned ? 'Earned!' : achievement.description,
+            isEarned ? l10n.earnedBadgeLabel : achievement.description,
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

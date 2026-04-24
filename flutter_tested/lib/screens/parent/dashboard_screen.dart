@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../services/auth_service.dart';
 import '../../services/parent_service.dart';
+import '../../utils/grade_utils.dart';
 import 'child_detail_screen.dart';
 
 const _avatarEmojis = {
@@ -53,6 +55,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -63,8 +67,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildHeader(),
-                Expanded(child: _buildBody()),
+                _buildHeader(l10n),
+                Expanded(child: _buildBody(l10n)),
               ],
             ),
           ),
@@ -73,7 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
@@ -87,7 +91,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome back,',
+                  l10n.welcomeBackLabel,
                   style: const TextStyle(fontSize: 13, color: Color(0xFF76310F)),
                 ),
                 Text(
@@ -111,7 +115,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(AppLocalizations l10n) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8D00)));
     }
@@ -129,7 +133,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ElevatedButton(
                 onPressed: _load,
                 style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8D00)),
-                child: const Text('Retry', style: TextStyle(color: Colors.white)),
+                child: Text(l10n.retry, style: const TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -139,11 +143,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final children = _children ?? [];
     if (children.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'No children added yet.\nGo to Parent Profile to add one.',
+          l10n.noChildrenMessage,
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFF76310F), fontSize: 15),
+          style: const TextStyle(color: Color(0xFF76310F), fontSize: 15),
         ),
       );
     }
@@ -155,19 +159,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         itemCount: children.length,
         separatorBuilder: (_, __) => const SizedBox(height: 16),
-        itemBuilder: (_, i) => _buildChildCard(children[i]),
+        itemBuilder: (_, i) => _buildChildCard(children[i], l10n),
       ),
     );
   }
 
-  Widget _buildChildCard(ChildOverview child) {
+  Widget _buildChildCard(ChildOverview child, AppLocalizations l10n) {
     final emoji = _avatarEmojis[child.avatar] ?? '🦊';
     final progress = child.goalProgressPercent / 100.0;
+    final gradeLabel = localizedGradeLabel(child.grade, l10n);
 
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => ChildDetailScreen(childId: child.id, childName: child.name)),
+        MaterialPageRoute(
+          builder: (_) => ChildDetailScreen(
+            childId: child.id,
+            childName: child.name,
+          ),
+        ),
       ).then((_) => _load()),
       child: Container(
         decoration: BoxDecoration(
@@ -211,7 +221,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                       Text(
-                        '${child.age} years · ${_gradeLabel(child.grade)}',
+                        l10n.childAgeYrsGrade(child.age, gradeLabel),
                         style: const TextStyle(fontSize: 12, color: Color(0xFF76310F)),
                       ),
                     ],
@@ -221,14 +231,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '${child.streakDays} days',
+                      l10n.daysCount(child.streakDays),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Color(0xFFFF8D00),
                         fontSize: 14,
                       ),
                     ),
-                    const Text('🔥 streak', style: TextStyle(fontSize: 11, color: Color(0xFF76310F))),
+                    Text(
+                      l10n.streakLabel,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF76310F)),
+                    ),
                   ],
                 ),
               ],
@@ -236,11 +249,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                _statChip('📚', '${child.todayLessonsCompleted}', 'lessons today'),
+                _statChip('📚', '${child.todayLessonsCompleted}', l10n.lessonsToday),
                 const SizedBox(width: 10),
-                _statChip('✅', '${child.todayAccuracy.toStringAsFixed(0)}%', 'accuracy'),
+                _statChip('✅', '${child.todayAccuracy.toStringAsFixed(0)}%', l10n.accuracyLabel),
                 const SizedBox(width: 10),
-                _statChip('⏱️', '${child.todayMinutes}m', 'learned'),
+                _statChip('⏱️', '${child.todayMinutes}m', l10n.learnedLabel),
               ],
             ),
             const SizedBox(height: 14),
@@ -259,7 +272,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  '${child.todayMinutes}/${child.targetMinutes}m goal',
+                  l10n.minutesGoalProgress(child.todayMinutes, child.targetMinutes),
                   style: const TextStyle(fontSize: 11, color: Color(0xFF76310F)),
                 ),
               ],
@@ -268,7 +281,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: Text(
-                'View Details →',
+                l10n.viewDetails,
                 style: const TextStyle(
                   color: Color(0xFFFF8D00),
                   fontWeight: FontWeight.bold,
@@ -304,16 +317,5 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
     );
-  }
-}
-
-String _gradeLabel(String grade) {
-  switch (grade) {
-    case 'kindergarten': return 'Kindergarten';
-    case 'first': return '1st Grade';
-    case 'second': return '2nd Grade';
-    case 'third': return '3rd Grade';
-    case 'fourth': return '4th Grade';
-    default: return grade;
   }
 }

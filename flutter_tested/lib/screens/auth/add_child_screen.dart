@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../controllers/auth_controller.dart';
 
@@ -9,14 +10,6 @@ const _avatarOptions = [
   ('rabbit', '🐰'),
   ('lion', '🦁'),
   ('tiger', '🐯'),
-];
-
-const _gradeOptions = [
-  ('kindergarten', 'Kindergarten'),
-  ('first', '1st Grade'),
-  ('second', '2nd Grade'),
-  ('third', '3rd Grade'),
-  ('fourth', '4th Grade'),
 ];
 
 class AddChildScreen extends StatefulWidget {
@@ -68,6 +61,16 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    final gradeOptions = [
+      ('kindergarten', l10n.kindergarten),
+      ('first', l10n.firstGrade),
+      ('second', l10n.secondGrade),
+      ('third', l10n.thirdGrade),
+      ('fourth', l10n.fourthGrade),
+    ];
+
     return Scaffold(
       body: Stack(
         children: [
@@ -87,9 +90,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
                             color: Color(0xFF44200B), size: 22),
                         onPressed: () => Navigator.pop(context),
                       ),
-                      const Text(
-                        'Add Child',
-                        style: TextStyle(
+                      Text(
+                        l10n.addChild,
+                        style: const TextStyle(
                           fontFamily: 'Recoleta',
                           fontWeight: FontWeight.w900,
                           fontSize: 26,
@@ -109,20 +112,20 @@ class _AddChildScreenState extends State<AddChildScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _buildSection(
-                            title: 'Choose Avatar',
+                            title: l10n.chooseAvatar,
                             child: _buildAvatarSelector(),
                           ),
                           const SizedBox(height: 16),
                           _buildSection(
-                            title: 'Name',
+                            title: l10n.childNameSectionLabel,
                             child: TextFormField(
                               controller: _nameCtrl,
                               style: const TextStyle(
                                   color: Color(0xFF44200B), fontSize: 16),
-                              decoration: _inputDecoration('Child\'s name'),
+                              decoration: _inputDecoration(l10n.childNameHint),
                               validator: (v) {
                                 if (v == null || v.trim().isEmpty) {
-                                  return 'Enter the child\'s name';
+                                  return l10n.validationEnterChildName;
                                 }
                                 return null;
                               },
@@ -130,13 +133,13 @@ class _AddChildScreenState extends State<AddChildScreen> {
                           ),
                           const SizedBox(height: 16),
                           _buildSection(
-                            title: 'Age',
+                            title: l10n.ageLabel,
                             child: _buildAgePicker(),
                           ),
                           const SizedBox(height: 16),
                           _buildSection(
-                            title: 'Grade',
-                            child: _buildGradeDropdown(),
+                            title: l10n.gradeSectionLabel,
+                            child: _buildGradeDropdown(gradeOptions, l10n),
                           ),
                           if (_error != null) ...[
                             const SizedBox(height: 16),
@@ -169,15 +172,15 @@ class _AddChildScreenState extends State<AddChildScreen> {
                                           color: Color(0xFF44200B),
                                           strokeWidth: 2.5),
                                     )
-                                  : const Text('Add Child'),
+                                  : Text(l10n.addChild),
                             ),
                           ),
                           const SizedBox(height: 16),
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text(
-                              'Cancel',
-                              style: TextStyle(
+                            child: Text(
+                              l10n.cancel,
+                              style: const TextStyle(
                                   color: Color(0xFF76310F), fontSize: 15),
                             ),
                           ),
@@ -301,14 +304,15 @@ class _AddChildScreenState extends State<AddChildScreen> {
     );
   }
 
-  Widget _buildGradeDropdown() {
+  Widget _buildGradeDropdown(
+      List<(String, String)> gradeOptions, AppLocalizations l10n) {
     return DropdownButtonFormField<String>(
       value: _selectedGrade,
       onChanged: (v) => setState(() => _selectedGrade = v!),
-      decoration: _inputDecoration('Select grade'),
+      decoration: _inputDecoration(l10n.selectGradeHint),
       dropdownColor: const Color(0xFFFFEDDC),
       style: const TextStyle(color: Color(0xFF44200B), fontSize: 15),
-      items: _gradeOptions.map((option) {
+      items: gradeOptions.map((option) {
         final (value, label) = option;
         return DropdownMenuItem(value: value, child: Text(label));
       }).toList(),

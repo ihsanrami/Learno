@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../services/parent_service.dart';
 import 'achievements_screen.dart';
@@ -69,6 +70,8 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -78,9 +81,9 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
           SafeArea(
             child: Column(
               children: [
-                _buildHeader(),
-                _buildTabBar(),
-                Expanded(child: _buildTabContent()),
+                _buildHeader(l10n),
+                _buildTabBar(l10n),
+                Expanded(child: _buildTabContent(l10n)),
               ],
             ),
           ),
@@ -89,7 +92,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
@@ -111,7 +114,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
           ),
           IconButton(
             icon: const Icon(Icons.emoji_events, color: Color(0xFFFF8D00)),
-            tooltip: 'Achievements',
+            tooltip: l10n.achievementsTooltip,
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -124,7 +127,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
           ),
           IconButton(
             icon: const Icon(Icons.flag, color: Color(0xFFFF8D00)),
-            tooltip: 'Daily Goal',
+            tooltip: l10n.dailyGoalTooltip,
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -140,7 +143,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
     );
   }
 
-  Widget _buildTabBar() {
+  Widget _buildTabBar(AppLocalizations l10n) {
     return Container(
       color: Colors.transparent,
       child: TabBar(
@@ -149,17 +152,17 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
         unselectedLabelColor: const Color(0xFF76310F),
         indicatorColor: const Color(0xFFFF8D00),
         labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-        tabs: const [
-          Tab(text: 'Overview'),
-          Tab(text: 'Weekly'),
-          Tab(text: 'Topics'),
-          Tab(text: 'Subjects'),
+        tabs: [
+          Tab(text: l10n.tabOverview),
+          Tab(text: l10n.tabWeekly),
+          Tab(text: l10n.tabTopics),
+          Tab(text: l10n.tabSubjects),
         ],
       ),
     );
   }
 
-  Widget _buildTabContent() {
+  Widget _buildTabContent(AppLocalizations l10n) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8D00)));
     }
@@ -175,7 +178,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
               ElevatedButton(
                 onPressed: _load,
                 style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8D00)),
-                child: const Text('Retry', style: TextStyle(color: Colors.white)),
+                child: Text(l10n.retry, style: const TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -186,19 +189,15 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
     return TabBarView(
       controller: _tabs,
       children: [
-        _buildOverviewTab(),
-        _buildWeeklyTab(),
-        _buildTopicsTab(),
-        _buildSubjectsTab(),
+        _buildOverviewTab(l10n),
+        _buildWeeklyTab(l10n),
+        _buildTopicsTab(l10n),
+        _buildSubjectsTab(l10n),
       ],
     );
   }
 
-  // -------------------------------------------------------------------------
-  // Overview Tab
-  // -------------------------------------------------------------------------
-
-  Widget _buildOverviewTab() {
+  Widget _buildOverviewTab(AppLocalizations l10n) {
     final o = _overview;
     if (o == null) return const SizedBox();
 
@@ -209,11 +208,11 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
           _card(
             child: Row(
               children: [
-                _bigStat('${o.todayMinutes}', 'min today', '⏱️'),
+                _bigStat('${o.todayMinutes}', l10n.minTodayLabel, '⏱️'),
                 _divider(),
-                _bigStat('${o.todayLessonsCompleted}', 'lessons', '📚'),
+                _bigStat('${o.todayLessonsCompleted}', l10n.lessonsToday, '📚'),
                 _divider(),
-                _bigStat('${o.todayAccuracy.toStringAsFixed(0)}%', 'accuracy', '✅'),
+                _bigStat('${o.todayAccuracy.toStringAsFixed(0)}%', l10n.accuracyLabel, '✅'),
               ],
             ),
           ),
@@ -222,15 +221,15 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _sectionTitle('All-Time Stats'),
+                _sectionTitle(l10n.allTimeStats),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _bigStat('${o.totalLessons}', 'total lessons', '🎓'),
+                    _bigStat('${o.totalLessons}', l10n.totalLessonsLabel, '🎓'),
                     _divider(),
-                    _bigStat('${o.overallAccuracy.toStringAsFixed(0)}%', 'accuracy', '🏆'),
+                    _bigStat('${o.overallAccuracy.toStringAsFixed(0)}%', l10n.accuracyLabel, '🏆'),
                     _divider(),
-                    _bigStat('${o.totalLearningMinutes}', 'total min', '📖'),
+                    _bigStat('${o.totalLearningMinutes}', l10n.totalMinLabel, '📖'),
                   ],
                 ),
               ],
@@ -243,10 +242,10 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
               children: [
                 Row(
                   children: [
-                    _sectionTitle('Learning Streak'),
+                    _sectionTitle(l10n.learningStreak),
                     const Spacer(),
                     Text(
-                      '🔥 ${o.streakDays} days',
+                      l10n.streakDaysCount(o.streakDays),
                       style: const TextStyle(
                         fontFamily: 'Recoleta',
                         fontWeight: FontWeight.w900,
@@ -257,7 +256,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
                   ],
                 ),
                 const SizedBox(height: 12),
-                _sectionTitle('Today\'s Goal'),
+                _sectionTitle(l10n.todaysGoal),
                 const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -270,7 +269,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '${o.todayMinutes} / ${o.targetMinutes} minutes',
+                  l10n.minutesProgress(o.todayMinutes, o.targetMinutes),
                   style: const TextStyle(fontSize: 12, color: Color(0xFF76310F)),
                 ),
               ],
@@ -281,14 +280,10 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
     );
   }
 
-  // -------------------------------------------------------------------------
-  // Weekly Tab
-  // -------------------------------------------------------------------------
-
-  Widget _buildWeeklyTab() {
+  Widget _buildWeeklyTab(AppLocalizations l10n) {
     final weekly = _weekly;
     if (weekly == null || weekly.isEmpty) {
-      return const Center(child: Text('No activity yet', style: TextStyle(color: Color(0xFF76310F))));
+      return Center(child: Text(l10n.noActivityYet, style: const TextStyle(color: Color(0xFF76310F))));
     }
 
     final maxMinutes = weekly.map((d) => d.minutes).fold(0, (a, b) => a > b ? a : b);
@@ -298,7 +293,9 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
         barRods: [
           BarChartRodData(
             toY: e.value.minutes.toDouble(),
-            color: e.value.lessonsCompleted > 0 ? const Color(0xFFFF8D00) : const Color(0xFFF7CDA5),
+            color: e.value.lessonsCompleted > 0
+                ? const Color(0xFFFF8D00)
+                : const Color(0xFFF7CDA5),
             width: 28,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
           ),
@@ -315,7 +312,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _sectionTitle('Learning Time (last 7 days)'),
+                _sectionTitle(l10n.learningTime7Days),
                 const SizedBox(height: 20),
                 SizedBox(
                   height: 200,
@@ -361,22 +358,22 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    _legend(const Color(0xFFFF8D00), 'Active day'),
+                    _legend(const Color(0xFFFF8D00), l10n.activeDay),
                     const SizedBox(width: 16),
-                    _legend(const Color(0xFFF7CDA5), 'No lessons'),
+                    _legend(const Color(0xFFF7CDA5), l10n.noLessonsLabel),
                   ],
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          ..._buildWeeklyList(weekly),
+          ..._buildWeeklyList(weekly, l10n),
         ],
       ),
     );
   }
 
-  List<Widget> _buildWeeklyList(List<DayActivity> weekly) {
+  List<Widget> _buildWeeklyList(List<DayActivity> weekly, AppLocalizations l10n) {
     return weekly.reversed.map((d) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 8),
@@ -409,7 +406,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
               ),
               const SizedBox(width: 8),
               Text(
-                '${d.minutes}m · ${d.lessonsCompleted} lessons',
+                l10n.minutesLessonsLabel(d.minutes, d.lessonsCompleted),
                 style: const TextStyle(fontSize: 11, color: Color(0xFF76310F)),
               ),
             ],
@@ -419,15 +416,11 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
     }).toList();
   }
 
-  // -------------------------------------------------------------------------
-  // Topics Tab
-  // -------------------------------------------------------------------------
-
-  Widget _buildTopicsTab() {
+  Widget _buildTopicsTab(AppLocalizations l10n) {
     final topics = _topics;
     if (topics == null || topics.isEmpty) {
-      return const Center(
-        child: Text('No topics studied yet', style: TextStyle(color: Color(0xFF76310F))),
+      return Center(
+        child: Text(l10n.noTopicsStudied, style: const TextStyle(color: Color(0xFF76310F))),
       );
     }
 
@@ -455,12 +448,13 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
                     ),
                   ),
                   if (t.mastered)
-                    const Text('⭐ Mastered', style: TextStyle(fontSize: 12, color: Color(0xFFFF8D00))),
+                    Text(l10n.masteredLabel,
+                        style: const TextStyle(fontSize: 12, color: Color(0xFFFF8D00))),
                 ],
               ),
               const SizedBox(height: 4),
               Text(
-                '${t.subject.toUpperCase()} · ${t.attempts} attempt${t.attempts != 1 ? 's' : ''}',
+                '${t.subject.toUpperCase()} · ${l10n.attemptsCount(t.attempts)}',
                 style: const TextStyle(fontSize: 11, color: Color(0xFF76310F)),
               ),
               const SizedBox(height: 8),
@@ -497,15 +491,11 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
     );
   }
 
-  // -------------------------------------------------------------------------
-  // Subjects Tab
-  // -------------------------------------------------------------------------
-
-  Widget _buildSubjectsTab() {
+  Widget _buildSubjectsTab(AppLocalizations l10n) {
     final subjects = _subjects;
     if (subjects == null || subjects.isEmpty) {
-      return const Center(
-        child: Text('No subjects studied yet', style: TextStyle(color: Color(0xFF76310F))),
+      return Center(
+        child: Text(l10n.noSubjectsStudied, style: const TextStyle(color: Color(0xFF76310F))),
       );
     }
 
@@ -539,7 +529,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _sectionTitle('Time by Subject'),
+                _sectionTitle(l10n.timeBySubject),
                 const SizedBox(height: 20),
                 SizedBox(
                   height: 220,
@@ -561,7 +551,8 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
                         Container(
                           width: 12,
                           height: 12,
-                          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                          decoration:
+                              BoxDecoration(color: color, shape: BoxShape.circle),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -589,10 +580,6 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
       ),
     );
   }
-
-  // -------------------------------------------------------------------------
-  // Helpers
-  // -------------------------------------------------------------------------
 
   Widget _card({required Widget child, EdgeInsets? padding}) {
     return Container(
@@ -655,8 +642,10 @@ class _ChildDetailScreenState extends State<ChildDetailScreen>
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 12, height: 12,
-          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+          width: 12,
+          height: 12,
+          decoration:
+              BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
         ),
         const SizedBox(width: 4),
         Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF76310F))),

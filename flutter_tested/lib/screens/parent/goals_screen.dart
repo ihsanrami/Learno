@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../services/parent_service.dart';
 
@@ -47,15 +48,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _saving = true);
     try {
       await _svc.setDailyGoal(widget.childId, _sliderValue.round());
       await _load();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Goal updated! 🎯'),
-          backgroundColor: Color(0xFFFF8D00),
+        SnackBar(
+          content: Text(l10n.goalUpdatedMessage),
+          backgroundColor: const Color(0xFFFF8D00),
         ),
       );
     } catch (e) {
@@ -68,16 +70,18 @@ class _GoalsScreenState extends State<GoalsScreen> {
     }
   }
 
-  String _encouragement(int progress) {
-    if (progress >= 100) return 'Goal achieved! Amazing job! 🎉';
-    if (progress >= 75) return 'Almost there, keep going! 💪';
-    if (progress >= 50) return 'Halfway through, great work! 🌟';
-    if (progress >= 25) return 'Good start, keep learning! 📚';
-    return 'Ready to learn today? Let\'s go! 🦊';
+  String _encouragement(int progress, AppLocalizations l10n) {
+    if (progress >= 100) return l10n.encouragementGoalAchieved;
+    if (progress >= 75) return l10n.encouragementAlmostThere;
+    if (progress >= 50) return l10n.encouragementHalfway;
+    if (progress >= 25) return l10n.encouragementGoodStart;
+    return l10n.encouragementReadyToLearn;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -88,8 +92,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildHeader(),
-                Expanded(child: _buildBody()),
+                _buildHeader(l10n),
+                Expanded(child: _buildBody(l10n)),
               ],
             ),
           ),
@@ -98,7 +102,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
@@ -108,7 +112,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
             onPressed: () => Navigator.pop(context),
           ),
           Text(
-            '${widget.childName}\'s Goal',
+            l10n.childGoalTitle(widget.childName),
             style: const TextStyle(
               fontFamily: 'Recoleta',
               fontWeight: FontWeight.w900,
@@ -121,7 +125,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(AppLocalizations l10n) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator(color: Color(0xFFFF8D00)));
     }
@@ -135,7 +139,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
             ElevatedButton(
               onPressed: _load,
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8D00)),
-              child: const Text('Retry', style: TextStyle(color: Colors.white)),
+              child: Text(l10n.retry, style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -149,17 +153,17 @@ class _GoalsScreenState extends State<GoalsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Column(
         children: [
-          _buildFoxCard(goal),
+          _buildFoxCard(goal, l10n),
           const SizedBox(height: 20),
-          _buildProgressCard(goal, progress),
+          _buildProgressCard(goal, progress, l10n),
           const SizedBox(height: 20),
-          _buildGoalSetterCard(),
+          _buildGoalSetterCard(l10n),
         ],
       ),
     );
   }
 
-  Widget _buildFoxCard(GoalStatus goal) {
+  Widget _buildFoxCard(GoalStatus goal, AppLocalizations l10n) {
     return Container(
       decoration: _cardDecoration(),
       padding: const EdgeInsets.all(24),
@@ -168,7 +172,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
           const Text('🦊', style: TextStyle(fontSize: 56)),
           const SizedBox(height: 8),
           Text(
-            _encouragement(goal.progressPercent),
+            _encouragement(goal.progressPercent, l10n),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontFamily: 'Recoleta',
@@ -182,16 +186,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
     );
   }
 
-  Widget _buildProgressCard(GoalStatus goal, double progress) {
+  Widget _buildProgressCard(GoalStatus goal, double progress, AppLocalizations l10n) {
     return Container(
       decoration: _cardDecoration(),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Today\'s Progress',
-            style: TextStyle(
+          Text(
+            l10n.todaysProgress,
+            style: const TextStyle(
               fontFamily: 'Recoleta',
               fontWeight: FontWeight.w900,
               fontSize: 18,
@@ -213,11 +217,11 @@ class _GoalsScreenState extends State<GoalsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${goal.todayMinutes} minutes learned',
+                l10n.minutesLearnedLabel(goal.todayMinutes),
                 style: const TextStyle(color: Color(0xFF76310F), fontSize: 13),
               ),
               Text(
-                'Goal: ${goal.targetMinutes} min',
+                l10n.goalMinutesLabel(goal.targetMinutes),
                 style: const TextStyle(
                   color: Color(0xFFFF8D00),
                   fontWeight: FontWeight.bold,
@@ -228,10 +232,10 @@ class _GoalsScreenState extends State<GoalsScreen> {
           ),
           if (goal.progressPercent >= 100) ...[
             const SizedBox(height: 12),
-            const Center(
+            Center(
               child: Text(
-                '🏆 Daily goal achieved!',
-                style: TextStyle(
+                l10n.dailyGoalAchievedMessage,
+                style: const TextStyle(
                   fontFamily: 'Recoleta',
                   fontWeight: FontWeight.w900,
                   fontSize: 16,
@@ -245,16 +249,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
     );
   }
 
-  Widget _buildGoalSetterCard() {
+  Widget _buildGoalSetterCard(AppLocalizations l10n) {
     return Container(
       decoration: _cardDecoration(),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Set Daily Goal',
-            style: TextStyle(
+          Text(
+            l10n.setDailyGoalTitle,
+            style: const TextStyle(
               fontFamily: 'Recoleta',
               fontWeight: FontWeight.w900,
               fontSize: 18,
@@ -262,14 +266,14 @@ class _GoalsScreenState extends State<GoalsScreen> {
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'How many minutes per day should your child learn?',
-            style: TextStyle(color: Color(0xFF76310F), fontSize: 13),
+          Text(
+            l10n.howManyMinutesQuestion,
+            style: const TextStyle(color: Color(0xFF76310F), fontSize: 13),
           ),
           const SizedBox(height: 20),
           Center(
             child: Text(
-              '${_sliderValue.round()} minutes',
+              l10n.minutesValueLabel(_sliderValue.round()),
               style: const TextStyle(
                 fontFamily: 'Recoleta',
                 fontWeight: FontWeight.w900,
@@ -295,11 +299,13 @@ class _GoalsScreenState extends State<GoalsScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('5 min', style: TextStyle(fontSize: 11, color: Color(0xFF76310F))),
-              Text('60 min', style: TextStyle(fontSize: 11, color: Color(0xFF76310F))),
+              Text(l10n.fiveMinLabel,
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF76310F))),
+              Text(l10n.sixtyMinLabel,
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF76310F))),
             ],
           ),
           const SizedBox(height: 20),
@@ -320,9 +326,9 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       height: 20,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                     )
-                  : const Text(
-                      'Save Goal',
-                      style: TextStyle(
+                  : Text(
+                      l10n.saveGoalButton,
+                      style: const TextStyle(
                         fontFamily: 'Recoleta',
                         fontWeight: FontWeight.w900,
                         fontSize: 16,

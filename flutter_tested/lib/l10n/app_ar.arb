@@ -1,0 +1,282 @@
+{
+  "@@locale": "ar",
+
+  "appTitle": "ليرنو",
+  "learningMadeFun": "التعلم بطريقة ممتعة!",
+  "cancel": "إلغاء",
+  "retry": "إعادة المحاولة",
+  "tryAgain": "حاول مرة أخرى",
+  "language": "اللغة",
+  "languageEnglish": "English",
+  "languageArabic": "العربية",
+
+  "kindergarten": "روضة الأطفال",
+  "firstGrade": "الصف الأول",
+  "secondGrade": "الصف الثاني",
+  "thirdGrade": "الصف الثالث",
+  "fourthGrade": "الصف الرابع",
+  "firstGradeFull": "الصف الأول",
+  "secondGradeFull": "الصف الثاني",
+  "thirdGradeFull": "الصف الثالث",
+  "fourthGradeFull": "الصف الرابع",
+
+  "subjectEnglish": "إنجليزي",
+  "subjectArabic": "عربي",
+  "subjectScience": "علوم",
+  "subjectMath": "رياضيات",
+
+  "welcomeBack": "مرحباً بعودتك!",
+  "signInToContinue": "سجّل دخولك للمتابعة",
+  "emailLabel": "البريد الإلكتروني",
+  "passwordLabel": "كلمة المرور",
+  "validationEnterEmail": "أدخل بريدك الإلكتروني",
+  "validationInvalidEmail": "أدخل بريداً إلكترونياً صحيحاً",
+  "validationEnterPassword": "أدخل كلمة المرور",
+  "loginButton": "دخول",
+  "noAccountQuestion": "ليس لديك حساب؟ ",
+  "registerLink": "سجّل الآن",
+
+  "createAccount": "إنشاء حساب",
+  "joinLearnoToday": "انضم إلى ليرنو اليوم",
+  "fullNameLabel": "الاسم الكامل",
+  "validationEnterFullName": "أدخل اسمك الكامل",
+  "validationEnterAPassword": "أدخل كلمة مرور",
+  "validationPasswordTooShort": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+  "confirmPasswordLabel": "تأكيد كلمة المرور",
+  "validationPasswordsDoNotMatch": "كلمتا المرور غير متطابقتين",
+  "alreadyHaveAccountQuestion": "لديك حساب بالفعل؟ ",
+  "loginLink": "دخول",
+
+  "hiName": "مرحباً، {name}!",
+  "@hiName": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "whoIsLearningToday": "من يتعلم اليوم؟",
+  "noLearnersYet": "لا يوجد متعلمون بعد!",
+  "addChildToGetStarted": "أضف ملف طفل للبدء",
+  "addChild": "إضافة طفل",
+
+  "chooseAvatar": "اختر الصورة الرمزية",
+  "childNameSectionLabel": "الاسم",
+  "childNameHint": "اسم الطفل",
+  "validationEnterChildName": "أدخل اسم الطفل",
+  "ageLabel": "العمر",
+  "gradeSectionLabel": "الصف الدراسي",
+  "selectGradeHint": "اختر الصف",
+
+  "parentProfile": "ملف ولي الأمر",
+  "logout": "تسجيل الخروج",
+  "logoutTitle": "تسجيل الخروج",
+  "logoutConfirm": "هل أنت متأكد من تسجيل الخروج؟",
+  "removeChildTitle": "إزالة الطفل",
+  "removeChildConfirm": "إزالة {name} من حسابك؟",
+  "@removeChildConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "remove": "إزالة",
+  "childrenCount": "الأطفال ({count})",
+  "@childrenCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "noChildrenAdded": "لا يوجد أطفال مضافون بعد.",
+  "parentDashboard": "لوحة تحكم ولي الأمر",
+  "childAgeYearsGrade": "{age} سنوات · {grade}",
+  "@childAgeYearsGrade": {
+    "placeholders": {
+      "age": {"type": "int"},
+      "grade": {"type": "String"}
+    }
+  },
+  "childAgeYrsGrade": "{age} سنة · {grade}",
+  "@childAgeYrsGrade": {
+    "placeholders": {
+      "age": {"type": "int"},
+      "grade": {"type": "String"}
+    }
+  },
+
+  "grades": "الصفوف",
+
+  "categories": "المواد",
+
+  "topics": "المواضيع",
+  "mathTopics": "مواضيع الرياضيات",
+  "scienceTopics": "مواضيع العلوم",
+  "englishTopics": "مواضيع الإنجليزية",
+  "arabicTopics": "مواضيع العربية",
+  "selectTopicHint": "اختر موضوعاً تريد البدء به،\nثم اضغط متابعة.",
+  "couldNotLoadTopics": "تعذّر تحميل المواضيع.\nتحقق من اتصالك بالإنترنت.",
+  "noTopicsAvailable": "لا توجد مواضيع متاحة.",
+
+  "welcomeBackLabel": "مرحباً بعودتك،",
+  "noChildrenMessage": "لا يوجد أطفال مضافون بعد.\nاذهب إلى ملف ولي الأمر لإضافة طفل.",
+  "lessonsToday": "دروس اليوم",
+  "accuracyLabel": "الدقة",
+  "learnedLabel": "تعلّم",
+  "viewDetails": "عرض التفاصيل ←",
+  "streakLabel": "🔥 سلسلة",
+  "daysCount": "{days} أيام",
+  "@daysCount": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "minutesGoalProgress": "{today}/{target} د هدف",
+  "@minutesGoalProgress": {
+    "placeholders": {
+      "today": {"type": "int"},
+      "target": {"type": "int"}
+    }
+  },
+  "minutesLessonsLabel": "{minutes}د · {lessons} درس",
+  "@minutesLessonsLabel": {
+    "placeholders": {
+      "minutes": {"type": "int"},
+      "lessons": {"type": "int"}
+    }
+  },
+
+  "tabOverview": "نظرة عامة",
+  "tabWeekly": "أسبوعي",
+  "tabTopics": "مواضيع",
+  "tabSubjects": "مواد",
+  "allTimeStats": "إحصائيات كلية",
+  "learningStreak": "سلسلة التعلم",
+  "todaysGoal": "هدف اليوم",
+  "todaysProgress": "تقدم اليوم",
+  "learningTime7Days": "وقت التعلم (آخر 7 أيام)",
+  "activeDay": "يوم نشط",
+  "noLessonsLabel": "لا دروس",
+  "noActivityYet": "لا نشاط بعد",
+  "noTopicsStudied": "لم تُدرَس مواضيع بعد",
+  "noSubjectsStudied": "لم تُدرَس مواد بعد",
+  "timeBySubject": "الوقت حسب المادة",
+  "masteredLabel": "⭐ أتقن",
+  "minTodayLabel": "د اليوم",
+  "totalLessonsLabel": "إجمالي الدروس",
+  "totalMinLabel": "إجمالي الدقائق",
+  "minutesProgress": "{today} / {target} دقيقة",
+  "@minutesProgress": {
+    "placeholders": {
+      "today": {"type": "int"},
+      "target": {"type": "int"}
+    }
+  },
+  "streakDaysCount": "🔥 {days} أيام",
+  "@streakDaysCount": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "achievementsTooltip": "الإنجازات",
+  "dailyGoalTooltip": "الهدف اليومي",
+  "attemptsCount": "{count} محاولات",
+  "@attemptsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "childGoalTitle": "هدف {name}",
+  "@childGoalTitle": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "goalUpdatedMessage": "تم تحديث الهدف! 🎯",
+  "setDailyGoalTitle": "تحديد الهدف اليومي",
+  "howManyMinutesQuestion": "كم دقيقة يجب أن يتعلم طفلك يومياً؟",
+  "saveGoalButton": "حفظ الهدف",
+  "dailyGoalAchievedMessage": "🏆 تم تحقيق الهدف اليومي!",
+  "minutesLearnedLabel": "{minutes} دقيقة تعلّم",
+  "@minutesLearnedLabel": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "goalMinutesLabel": "الهدف: {minutes} د",
+  "@goalMinutesLabel": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "minutesValueLabel": "{minutes} دقيقة",
+  "@minutesValueLabel": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "fiveMinLabel": "5 د",
+  "sixtyMinLabel": "60 د",
+  "encouragementGoalAchieved": "تم تحقيق الهدف! أحسنت! 🎉",
+  "encouragementAlmostThere": "على وشك الإنتهاء، استمر! 💪",
+  "encouragementHalfway": "في المنتصف، عمل رائع! 🌟",
+  "encouragementGoodStart": "بداية جيدة، واصل التعلم! 📚",
+  "encouragementReadyToLearn": "جاهز للتعلم اليوم؟ هيا نبدأ! 🦊",
+
+  "childAchievementsTitle": "إنجازات {name}",
+  "@childAchievementsTitle": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "badgesTitle": "الشارات",
+  "earnedBadgesCount": "{earned} / {total} مكتسبة",
+  "@earnedBadgesCount": {
+    "placeholders": {
+      "earned": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "startLearningEarnBadges": "ابدأ التعلم لكسب الشارات!",
+  "allBadgesCollected": "تم جمع كل الشارات! 🎉",
+  "moreBadgesToUnlock": "{count} أخرى للفتح",
+  "@moreBadgesToUnlock": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "earnedBadgeLabel": "مكتسبة!",
+
+  "thinkingLabel": "جاري التفكير…",
+  "tapMicOrTypeHint": "اضغط الميكروفون أو اكتب...",
+  "typeYourAnswerHint": "اكتب إجابتك...",
+  "learnoIsSpeakingLabel": "🔊 ليرنو يتحدث...",
+  "listeningLabel": "🎤 جاري الاستماع...",
+  "voiceOnTooltip": "الصوت مفعّل",
+  "voiceOffTooltip": "الصوت معطّل",
+  "conceptProgressLabel": "المفهوم {current} من {total}",
+  "@conceptProgressLabel": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "greatJobTitle": "🎉 أحسنت!",
+  "lessonCompletedMessage": "أكملت الدرس!",
+  "correctAnswersCount": "✅ {count} إجابات صحيحة",
+  "@correctAnswersCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "accuracyScoreLabel": "📊 دقة {score}%",
+  "@accuracyScoreLabel": {
+    "placeholders": {
+      "score": {"type": "String"}
+    }
+  },
+  "youAreAStar": "⭐ أنت نجم! ⭐",
+  "continueButton": "متابعة",
+  "imageNotAvailableLabel": "الصورة غير متاحة",
+  "levelLearning": "يتعلم",
+  "levelGrowing": "ينمو",
+  "levelGreat": "ممتاز!",
+  "levelStar": "نجم!"
+}

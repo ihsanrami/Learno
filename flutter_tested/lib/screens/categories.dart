@@ -1,33 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../models/enums.dart';
 import '../core/session_state.dart';
+import '../utils/grade_utils.dart';
 import 'topics.dart';
 
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});
 
-  String _gradeText() {
-    switch (SessionState.grade) {
-      case Grade.kindergarten:
-        return 'Kindergarten';
-      case Grade.first:
-        return 'First Grade';
-      case Grade.second:
-        return 'Second Grade';
-      case Grade.third:
-        return 'Third Grade';
-      case Grade.fourth:
-        return 'Fourth Grade';
-      default:
-        return '';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final double itemWidth =
-        MediaQuery.of(context).size.width * 0.38;
+    final l10n = AppLocalizations.of(context)!;
+    final double itemWidth = MediaQuery.of(context).size.width * 0.38;
+    final gradeText = localizedGradeFromEnum(SessionState.grade, l10n);
 
     return Scaffold(
       body: Stack(
@@ -38,7 +24,6 @@ class CategoriesScreen extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           ),
-
           SafeArea(
             child: Column(
               children: [
@@ -55,7 +40,7 @@ class CategoriesScreen extends StatelessWidget {
                         onPressed: () => Navigator.pop(context),
                       ),
                       Text(
-                        _gradeText(),
+                        gradeText,
                         style: const TextStyle(
                           fontSize: 20,
                           color: Color(0xFF44200B),
@@ -64,25 +49,21 @@ class CategoriesScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 30),
-                const Text(
-                  'Categories',
-                  style: TextStyle(
+                Text(
+                  l10n.categories,
+                  style: const TextStyle(
                     fontFamily: 'Recoleta',
                     fontWeight: FontWeight.w900,
                     fontSize: 55,
                     color: Color(0xFF44200B),
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
                 Expanded(
                   child: SingleChildScrollView(
                     child: Padding(
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 25),
+                      padding: const EdgeInsets.symmetric(horizontal: 25),
                       child: Wrap(
                         alignment: WrapAlignment.center,
                         spacing: 20,
@@ -92,28 +73,28 @@ class CategoriesScreen extends StatelessWidget {
                             context,
                             width: itemWidth,
                             image: 'assets/images/english.png',
-                            label: 'English',
+                            label: l10n.subjectEnglish,
                             subject: Subject.english,
                           ),
                           _wrapItem(
                             context,
                             width: itemWidth,
                             image: 'assets/images/arabic.png',
-                            label: 'Arabic',
+                            label: l10n.subjectArabic,
                             subject: Subject.arabic,
                           ),
                           _wrapItem(
                             context,
                             width: itemWidth,
                             image: 'assets/images/science.png',
-                            label: 'Science',
+                            label: l10n.subjectScience,
                             subject: Subject.science,
                           ),
                           _wrapItem(
                             context,
                             width: itemWidth,
                             image: 'assets/images/math.png',
-                            label: 'Math',
+                            label: l10n.subjectMath,
                             subject: Subject.math,
                           ),
                         ],
@@ -130,29 +111,24 @@ class CategoriesScreen extends StatelessWidget {
   }
 
   Widget _wrapItem(
-      BuildContext context, {
-        required double width,
-        required String image,
-        required String label,
-        required Subject subject,
-      }) {
+    BuildContext context, {
+    required double width,
+    required String image,
+    required String label,
+    required Subject subject,
+  }) {
     return SizedBox(
       width: width,
-      child: _topicItem(
-        context,
-        image: image,
-        label: label,
-        subject: subject,
-      ),
+      child: _topicItem(context, image: image, label: label, subject: subject),
     );
   }
 
   Widget _topicItem(
-      BuildContext context, {
-        required String image,
-        required String label,
-        required Subject subject,
-      }) {
+    BuildContext context, {
+    required String image,
+    required String label,
+    required Subject subject,
+  }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

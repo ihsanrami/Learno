@@ -1,0 +1,282 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Learno",
+  "learningMadeFun": "Learning made fun!",
+  "cancel": "Cancel",
+  "retry": "Retry",
+  "tryAgain": "Try Again",
+  "language": "Language",
+  "languageEnglish": "English",
+  "languageArabic": "العربية",
+
+  "kindergarten": "Kindergarten",
+  "firstGrade": "1st Grade",
+  "secondGrade": "2nd Grade",
+  "thirdGrade": "3rd Grade",
+  "fourthGrade": "4th Grade",
+  "firstGradeFull": "First Grade",
+  "secondGradeFull": "Second Grade",
+  "thirdGradeFull": "Third Grade",
+  "fourthGradeFull": "Fourth Grade",
+
+  "subjectEnglish": "English",
+  "subjectArabic": "Arabic",
+  "subjectScience": "Science",
+  "subjectMath": "Math",
+
+  "welcomeBack": "Welcome Back!",
+  "signInToContinue": "Sign in to continue",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "validationEnterEmail": "Enter your email",
+  "validationInvalidEmail": "Enter a valid email",
+  "validationEnterPassword": "Enter your password",
+  "loginButton": "Login",
+  "noAccountQuestion": "Don't have an account? ",
+  "registerLink": "Register",
+
+  "createAccount": "Create Account",
+  "joinLearnoToday": "Join Learno today",
+  "fullNameLabel": "Full Name",
+  "validationEnterFullName": "Enter your full name",
+  "validationEnterAPassword": "Enter a password",
+  "validationPasswordTooShort": "Password must be at least 8 characters",
+  "confirmPasswordLabel": "Confirm Password",
+  "validationPasswordsDoNotMatch": "Passwords do not match",
+  "alreadyHaveAccountQuestion": "Already have an account? ",
+  "loginLink": "Login",
+
+  "hiName": "Hi, {name}!",
+  "@hiName": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "whoIsLearningToday": "Who is learning today?",
+  "noLearnersYet": "No learners yet!",
+  "addChildToGetStarted": "Add a child profile to get started",
+  "addChild": "Add Child",
+
+  "chooseAvatar": "Choose Avatar",
+  "childNameSectionLabel": "Name",
+  "childNameHint": "Child's name",
+  "validationEnterChildName": "Enter the child's name",
+  "ageLabel": "Age",
+  "gradeSectionLabel": "Grade",
+  "selectGradeHint": "Select grade",
+
+  "parentProfile": "Parent Profile",
+  "logout": "Logout",
+  "logoutTitle": "Logout",
+  "logoutConfirm": "Are you sure you want to logout?",
+  "removeChildTitle": "Remove Child",
+  "removeChildConfirm": "Remove {name} from your account?",
+  "@removeChildConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "remove": "Remove",
+  "childrenCount": "Children ({count})",
+  "@childrenCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "noChildrenAdded": "No children added yet.",
+  "parentDashboard": "Parent Dashboard",
+  "childAgeYearsGrade": "{age} years · {grade}",
+  "@childAgeYearsGrade": {
+    "placeholders": {
+      "age": {"type": "int"},
+      "grade": {"type": "String"}
+    }
+  },
+  "childAgeYrsGrade": "{age} yrs · {grade}",
+  "@childAgeYrsGrade": {
+    "placeholders": {
+      "age": {"type": "int"},
+      "grade": {"type": "String"}
+    }
+  },
+
+  "grades": "Grades",
+
+  "categories": "Categories",
+
+  "topics": "Topics",
+  "mathTopics": "Math Topics",
+  "scienceTopics": "Science Topics",
+  "englishTopics": "English Topics",
+  "arabicTopics": "Arabic Topics",
+  "selectTopicHint": "Select a topic you want to start with,\nthen press Continue.",
+  "couldNotLoadTopics": "Could not load topics.\nPlease check your connection.",
+  "noTopicsAvailable": "No topics available.",
+
+  "welcomeBackLabel": "Welcome back,",
+  "noChildrenMessage": "No children added yet.\nGo to Parent Profile to add one.",
+  "lessonsToday": "lessons today",
+  "accuracyLabel": "accuracy",
+  "learnedLabel": "learned",
+  "viewDetails": "View Details →",
+  "streakLabel": "🔥 streak",
+  "daysCount": "{days} days",
+  "@daysCount": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "minutesGoalProgress": "{today}/{target}m goal",
+  "@minutesGoalProgress": {
+    "placeholders": {
+      "today": {"type": "int"},
+      "target": {"type": "int"}
+    }
+  },
+  "minutesLessonsLabel": "{minutes}m · {lessons} lessons",
+  "@minutesLessonsLabel": {
+    "placeholders": {
+      "minutes": {"type": "int"},
+      "lessons": {"type": "int"}
+    }
+  },
+
+  "tabOverview": "Overview",
+  "tabWeekly": "Weekly",
+  "tabTopics": "Topics",
+  "tabSubjects": "Subjects",
+  "allTimeStats": "All-Time Stats",
+  "learningStreak": "Learning Streak",
+  "todaysGoal": "Today's Goal",
+  "todaysProgress": "Today's Progress",
+  "learningTime7Days": "Learning Time (last 7 days)",
+  "activeDay": "Active day",
+  "noLessonsLabel": "No lessons",
+  "noActivityYet": "No activity yet",
+  "noTopicsStudied": "No topics studied yet",
+  "noSubjectsStudied": "No subjects studied yet",
+  "timeBySubject": "Time by Subject",
+  "masteredLabel": "⭐ Mastered",
+  "minTodayLabel": "min today",
+  "totalLessonsLabel": "total lessons",
+  "totalMinLabel": "total min",
+  "minutesProgress": "{today} / {target} minutes",
+  "@minutesProgress": {
+    "placeholders": {
+      "today": {"type": "int"},
+      "target": {"type": "int"}
+    }
+  },
+  "streakDaysCount": "🔥 {days} days",
+  "@streakDaysCount": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "achievementsTooltip": "Achievements",
+  "dailyGoalTooltip": "Daily Goal",
+  "attemptsCount": "{count} attempts",
+  "@attemptsCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "childGoalTitle": "{name}'s Goal",
+  "@childGoalTitle": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "goalUpdatedMessage": "Goal updated! 🎯",
+  "setDailyGoalTitle": "Set Daily Goal",
+  "howManyMinutesQuestion": "How many minutes per day should your child learn?",
+  "saveGoalButton": "Save Goal",
+  "dailyGoalAchievedMessage": "🏆 Daily goal achieved!",
+  "minutesLearnedLabel": "{minutes} minutes learned",
+  "@minutesLearnedLabel": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "goalMinutesLabel": "Goal: {minutes} min",
+  "@goalMinutesLabel": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "minutesValueLabel": "{minutes} minutes",
+  "@minutesValueLabel": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "fiveMinLabel": "5 min",
+  "sixtyMinLabel": "60 min",
+  "encouragementGoalAchieved": "Goal achieved! Amazing job! 🎉",
+  "encouragementAlmostThere": "Almost there, keep going! 💪",
+  "encouragementHalfway": "Halfway through, great work! 🌟",
+  "encouragementGoodStart": "Good start, keep learning! 📚",
+  "encouragementReadyToLearn": "Ready to learn today? Let's go! 🦊",
+
+  "childAchievementsTitle": "{name}'s Achievements",
+  "@childAchievementsTitle": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "badgesTitle": "Badges",
+  "earnedBadgesCount": "{earned} / {total} earned",
+  "@earnedBadgesCount": {
+    "placeholders": {
+      "earned": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "startLearningEarnBadges": "Start learning to earn badges!",
+  "allBadgesCollected": "All badges collected! 🎉",
+  "moreBadgesToUnlock": "{count} more to unlock",
+  "@moreBadgesToUnlock": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "earnedBadgeLabel": "Earned!",
+
+  "thinkingLabel": "Thinking…",
+  "tapMicOrTypeHint": "Tap mic or type...",
+  "typeYourAnswerHint": "Type your answer...",
+  "learnoIsSpeakingLabel": "🔊 Learno is speaking...",
+  "listeningLabel": "🎤 Listening...",
+  "voiceOnTooltip": "Voice ON",
+  "voiceOffTooltip": "Voice OFF",
+  "conceptProgressLabel": "Concept {current} of {total}",
+  "@conceptProgressLabel": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "greatJobTitle": "🎉 Great Job!",
+  "lessonCompletedMessage": "You completed the lesson!",
+  "correctAnswersCount": "✅ {count} correct answers",
+  "@correctAnswersCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "accuracyScoreLabel": "📊 {score}% accuracy",
+  "@accuracyScoreLabel": {
+    "placeholders": {
+      "score": {"type": "String"}
+    }
+  },
+  "youAreAStar": "⭐ You are a star! ⭐",
+  "continueButton": "Continue",
+  "imageNotAvailableLabel": "Image not available",
+  "levelLearning": "Learning",
+  "levelGrowing": "Growing",
+  "levelGreat": "Great!",
+  "levelStar": "Star!"
+}

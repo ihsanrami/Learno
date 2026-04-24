@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../controllers/auth_controller.dart';
+import '../../controllers/locale_controller.dart';
 import '../../services/auth_service.dart';
+import '../../utils/grade_utils.dart';
 import '../parent/dashboard_screen.dart';
 import 'login_screen.dart';
 
@@ -28,11 +31,13 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   void initState() {
     super.initState();
     _controller.addListener(_onUpdate);
+    LocaleController.instance.addListener(_onUpdate);
   }
 
   @override
   void dispose() {
     _controller.removeListener(_onUpdate);
+    LocaleController.instance.removeListener(_onUpdate);
     super.dispose();
   }
 
@@ -41,28 +46,29 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   }
 
   Future<void> _logout() async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFFFFEDDC),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Logout',
-          style: TextStyle(
+        title: Text(
+          l10n.logoutTitle,
+          style: const TextStyle(
             fontFamily: 'Recoleta',
             fontWeight: FontWeight.w900,
             color: Color(0xFF44200B),
           ),
         ),
-        content: const Text(
-          'Are you sure you want to logout?',
-          style: TextStyle(color: Color(0xFF76310F)),
+        content: Text(
+          l10n.logoutConfirm,
+          style: const TextStyle(color: Color(0xFF76310F)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel',
-                style: TextStyle(color: Color(0xFF76310F))),
+            child: Text(l10n.cancel,
+                style: const TextStyle(color: Color(0xFF76310F))),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -73,7 +79,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Logout'),
+            child: Text(l10n.logout),
           ),
         ],
       ),
@@ -90,28 +96,29 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
   }
 
   Future<void> _deleteChild(ChildModel child) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFFFFEDDC),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Remove Child',
-          style: TextStyle(
+        title: Text(
+          l10n.removeChildTitle,
+          style: const TextStyle(
             fontFamily: 'Recoleta',
             fontWeight: FontWeight.w900,
             color: Color(0xFF44200B),
           ),
         ),
         content: Text(
-          'Remove ${child.name} from your account?',
+          l10n.removeChildConfirm(child.name),
           style: const TextStyle(color: Color(0xFF76310F)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel',
-                style: TextStyle(color: Color(0xFF76310F))),
+            child: Text(l10n.cancel,
+                style: const TextStyle(color: Color(0xFF76310F))),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -122,7 +129,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Remove'),
+            child: Text(l10n.remove),
           ),
         ],
       ),
@@ -133,6 +140,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final parent = _controller.currentParent;
     final children = _controller.children;
 
@@ -156,9 +164,9 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                             color: Color(0xFF44200B), size: 22),
                         onPressed: () => Navigator.pop(context),
                       ),
-                      const Text(
-                        'Parent Profile',
-                        style: TextStyle(
+                      Text(
+                        l10n.parentProfile,
+                        style: const TextStyle(
                           fontFamily: 'Recoleta',
                           fontWeight: FontWeight.w900,
                           fontSize: 26,
@@ -177,11 +185,13 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                       children: [
                         _buildParentCard(parent),
                         const SizedBox(height: 20),
-                        _buildChildrenSection(children),
+                        _buildChildrenSection(children, l10n),
                         const SizedBox(height: 20),
-                        _buildDashboardButton(),
+                        _buildLanguageSection(l10n),
+                        const SizedBox(height: 20),
+                        _buildDashboardButton(l10n),
                         const SizedBox(height: 12),
-                        _buildLogoutButton(),
+                        _buildLogoutButton(l10n),
                         const SizedBox(height: 24),
                       ],
                     ),
@@ -252,7 +262,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     );
   }
 
-  Widget _buildChildrenSection(List<ChildModel> children) {
+  Widget _buildChildrenSection(List<ChildModel> children, AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFFFEDDC),
@@ -270,7 +280,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Children (${children.length})',
+            l10n.childrenCount(children.length),
             style: const TextStyle(
               fontFamily: 'Recoleta',
               fontWeight: FontWeight.w900,
@@ -280,19 +290,20 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
           ),
           const SizedBox(height: 12),
           if (children.isEmpty)
-            const Text(
-              'No children added yet.',
-              style: TextStyle(color: Color(0xFF76310F), fontSize: 14),
+            Text(
+              l10n.noChildrenAdded,
+              style: const TextStyle(color: Color(0xFF76310F), fontSize: 14),
             )
           else
-            ...children.map((child) => _buildChildRow(child)),
+            ...children.map((child) => _buildChildRow(child, l10n)),
         ],
       ),
     );
   }
 
-  Widget _buildChildRow(ChildModel child) {
+  Widget _buildChildRow(ChildModel child, AppLocalizations l10n) {
     final emoji = _avatarEmojis[child.avatar] ?? '🦊';
+    final gradeLabel = localizedGradeLabel(child.grade, l10n);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -322,7 +333,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
                   ),
                 ),
                 Text(
-                  '${child.age} years · ${_gradeLabel(child.grade)}',
+                  l10n.childAgeYearsGrade(child.age, gradeLabel),
                   style: const TextStyle(
                       color: Color(0xFF76310F), fontSize: 12),
                 ),
@@ -339,7 +350,88 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     );
   }
 
-  Widget _buildDashboardButton() {
+  Widget _buildLanguageSection(AppLocalizations l10n) {
+    final isArabic = LocaleController.instance.isArabic;
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFEDDC),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF44200B).withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.language,
+            style: const TextStyle(
+              fontFamily: 'Recoleta',
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+              color: Color(0xFF44200B),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildLangButton(
+                l10n.languageEnglish,
+                !isArabic,
+                () => LocaleController.instance.setLocale(const Locale('en')),
+              ),
+              const SizedBox(width: 12),
+              _buildLangButton(
+                l10n.languageArabic,
+                isArabic,
+                () => LocaleController.instance.setLocale(const Locale('ar')),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLangButton(String label, bool isSelected, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFFF8D00) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xFFFF8D00)
+                  : const Color(0xFFF7CDA5),
+              width: 1.5,
+            ),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: isSelected
+                  ? const Color(0xFF44200B)
+                  : const Color(0xFF76310F),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashboardButton(AppLocalizations l10n) {
     return SizedBox(
       height: 52,
       child: ElevatedButton.icon(
@@ -348,7 +440,7 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
           MaterialPageRoute(builder: (_) => const DashboardScreen()),
         ),
         icon: const Icon(Icons.bar_chart, size: 20),
-        label: const Text('Parent Dashboard'),
+        label: Text(l10n.parentDashboard),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFFF8D00),
           foregroundColor: Colors.white,
@@ -364,13 +456,13 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
     );
   }
 
-  Widget _buildLogoutButton() {
+  Widget _buildLogoutButton(AppLocalizations l10n) {
     return SizedBox(
       height: 52,
       child: ElevatedButton.icon(
         onPressed: _controller.isLoading ? null : _logout,
         icon: const Icon(Icons.logout, size: 20),
-        label: const Text('Logout'),
+        label: Text(l10n.logout),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF76310F),
           foregroundColor: Colors.white,
@@ -384,22 +476,5 @@ class _ParentProfileScreenState extends State<ParentProfileScreen> {
         ),
       ),
     );
-  }
-}
-
-String _gradeLabel(String grade) {
-  switch (grade) {
-    case 'kindergarten':
-      return 'Kindergarten';
-    case 'first':
-      return '1st Grade';
-    case 'second':
-      return '2nd Grade';
-    case 'third':
-      return '3rd Grade';
-    case 'fourth':
-      return '4th Grade';
-    default:
-      return grade;
   }
 }
