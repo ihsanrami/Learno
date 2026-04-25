@@ -1,0 +1,74 @@
+name: Build APK
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "flutter_tested/**"
+      - ".github/workflows/build-apk.yml"
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "Backend API URL"
+        required: false
+        default: "https://your-backend-url.com"
+
+jobs:
+  build:
+    name: Build Android APK & AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "stable"
+          channel: "stable"
+          cache: true
+
+      - name: Get dependencies
+        working-directory: flutter_tested
+        run: flutter pub get
+
+      - name: Generate localization files
+        working-directory: flutter_tested
+        run: flutter gen-l10n
+
+      - name: Analyze (lint)
+        working-directory: flutter_tested
+        run: flutter analyze --no-fatal-infos
+
+      - name: Build APK
+        working-directory: flutter_tested
+        run: |
+          flutter build apk --release \
+            --dart-define=API_BASE_URL=${{ github.event.inputs.api_url || 'https://your-backend-url.com' }}
+
+      - name: Build App Bundle
+        working-directory: flutter_tested
+        run: |
+          flutter build appbundle --release \
+            --dart-define=API_BASE_URL=${{ github.event.inputs.api_url || 'https://your-backend-url.com' }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: learno-release-apk
+          path: flutter_tested/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: learno-release-aab
+          path: flutter_tested/build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30
