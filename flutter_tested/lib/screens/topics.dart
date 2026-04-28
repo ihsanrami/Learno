@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:learno/l10n/app_localizations.dart';
 
 import '../models/enums.dart';
 import '../core/session_state.dart';
@@ -64,6 +64,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
       case Subject.science: return l10n.scienceTopics;
       case Subject.english: return l10n.englishTopics;
       case Subject.arabic:  return l10n.arabicTopics;
+      case Subject.stories: return l10n.topics;
     }
   }
 

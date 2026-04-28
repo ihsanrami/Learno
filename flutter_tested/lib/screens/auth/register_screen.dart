@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:learno/l10n/app_localizations.dart';
 
 import '../../controllers/auth_controller.dart';
 import 'login_screen.dart';
@@ -64,12 +64,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      extendBody: true,
+      resizeToAvoidBottomInset: true,
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           Positioned.fill(
             child: Image.asset('assets/images/background.png', fit: BoxFit.cover),
           ),
           SafeArea(
+            bottom: false,
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
               child: Form(
@@ -215,7 +220,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
                   ],
                 ),
               ),

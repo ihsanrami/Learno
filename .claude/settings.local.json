@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -m pytest tests/test_message_splitter.py -v)"
+      "Bash(python -m pytest tests/test_message_splitter.py -v)",
+      "Bash(python -m pytest backend_fixed/tests/test_message_splitter.py -v)",
+      "Bash(git add *)",
+      "Bash(python *)",
+      "Bash(pip list *)",
+      "Bash(git *)"
     ]
   }
 }

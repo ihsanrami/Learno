@@ -17,7 +17,7 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  intl: ^0.19.0
+  intl: 0.20.2
 
   # UI
   cupertino_icons: ^1.0.8
@@ -26,13 +26,13 @@ dependencies:
   http: ^1.2.0
   
   # Text-to-Speech (Learno speaks)
-  flutter_tts: ^3.8.5
+  flutter_tts: ^4.2.5
   
   # Speech-to-Text (Child speaks)
   speech_to_text: ^7.0.0
   
   # Permission handling
-  permission_handler: ^11.3.1
+  permission_handler: ^12.0.1
   
   # Local storage (student data)
   shared_preferences: ^2.2.3
@@ -44,18 +44,19 @@ dependencies:
   cached_network_image: ^3.3.0
 
   # Auth - secure token storage
-  flutter_secure_storage: ^9.0.0
+  flutter_secure_storage: ^10.0.0
 
   # Auth - HTTP client with interceptors (token refresh)
   dio: ^5.4.0
 
   # Charts for parent analytics
-  fl_chart: ^0.66.0
+  fl_chart: ^1.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   generate: true

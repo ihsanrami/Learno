@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:learno/l10n/app_localizations.dart';
 
 import '../core/session_state.dart';
 import '../api/api_service.dart';
@@ -28,6 +28,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final List<_ChatMessageUI> _messages = [];
 
   bool _isLoading = false;
+  bool _isStartingSession = false;
   bool _sessionStarted = false;
   bool _silenceHandled = false;
   String? _errorMessage;
@@ -98,6 +99,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     setState(() {
       _isLoading = true;
+      _isStartingSession = true;
       _errorMessage = null;
       _silenceHandled = false;
     });
@@ -113,7 +115,10 @@ class _ChatScreenState extends State<ChatScreen> {
         SessionState.updateAnalytics(response.analytics);
       }
 
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _isStartingSession = false;
+      });
 
       _currentResponseType = response.learnoResponse.responseType;
       _waitingForAnswer = _isQuestionType(_currentResponseType);
@@ -123,6 +128,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       setState(() {
         _isLoading = false;
+        _isStartingSession = false;
         _errorMessage = e.toString();
       });
       _showError(e.toString());
@@ -658,6 +664,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildLoadingIndicator(AppLocalizations l10n) {
+    final label = _isStartingSession
+        ? 'Preparing your lesson…\nThis may take up to a minute.'
+        : l10n.thinkingLabel;
     return Align(
       alignment: Alignment.centerRight,
       child: Container(
@@ -677,8 +686,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   strokeWidth: 2, color: Color(0xFFFF8D00)),
             ),
             const SizedBox(width: 10),
-            Text(l10n.thinkingLabel,
-                style: const TextStyle(color: Color(0xFF44200B))),
+            Flexible(
+              child: Text(label,
+                  style: const TextStyle(color: Color(0xFF44200B))),
+            ),
           ],
         ),
       ),

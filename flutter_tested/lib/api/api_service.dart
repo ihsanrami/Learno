@@ -1,9 +1,3 @@
-/// =============================================================================
-/// API Service - Communication with Learno Backend
-/// =============================================================================
-/// ✅ FIXED: Removed duplicate Grade enum, using import from models
-/// =============================================================================
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -29,10 +23,6 @@ class ApiService {
     };
   }
 
-  // ==========================================================================
-  // SESSION
-  // ==========================================================================
-
   static Future<StartSessionResponse> startSession({
     bool forceNew = false,
   }) async {
@@ -49,7 +39,7 @@ class ApiService {
 
     final response = await http
         .post(url, headers: _headers, body: jsonEncode(request.toJson()))
-        .timeout(ApiConfig.connectionTimeout);
+        .timeout(ApiConfig.lessonTimeout);
 
     if (response.statusCode != 200) {
       throw ApiException('Server error: ${response.statusCode}');
@@ -91,10 +81,6 @@ class ApiService {
     return EndSessionResponse.fromJson(jsonDecode(response.body));
   }
 
-  // ==========================================================================
-  // LESSON INTERACTION
-  // ==========================================================================
-
   static Future<LessonResponse> continueLesson() async {
     final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.lessonContinue}');
 
@@ -104,7 +90,7 @@ class ApiService {
 
     final response = await http
         .post(url, headers: _headers, body: jsonEncode(request.toJson()))
-        .timeout(ApiConfig.connectionTimeout);
+        .timeout(ApiConfig.lessonTimeout);
 
     if (response.statusCode != 200) {
       throw ApiException('Server error: ${response.statusCode}');
@@ -129,7 +115,7 @@ class ApiService {
 
     final response = await http
         .post(url, headers: _headers, body: jsonEncode(request.toJson()))
-        .timeout(ApiConfig.connectionTimeout);
+        .timeout(ApiConfig.lessonTimeout);
 
     if (response.statusCode != 200) {
       throw ApiException('Server error: ${response.statusCode}');
@@ -148,7 +134,7 @@ class ApiService {
 
     final response = await http
         .post(url, headers: _headers, body: jsonEncode(request.toJson()))
-        .timeout(ApiConfig.connectionTimeout);
+        .timeout(ApiConfig.lessonTimeout);
 
     if (response.statusCode != 200) {
       throw ApiException('Server error: ${response.statusCode}');
@@ -156,10 +142,6 @@ class ApiService {
 
     return SilenceResponse.fromJson(jsonDecode(response.body));
   }
-
-  // ==========================================================================
-  // CURRICULUM
-  // ==========================================================================
 
   static Future<List<TopicData>> fetchTopics(int grade, String subject) async {
     final url = Uri.parse(
@@ -182,22 +164,13 @@ class ApiService {
         .toList();
   }
 
-  // ==========================================================================
-  // HELPERS
-  // ==========================================================================
-
   static int _gradeToInt(Grade grade) {
     switch (grade) {
-      case Grade.kindergarten:
-        return 0;
-      case Grade.first:
-        return 1;
-      case Grade.second:
-        return 2;
-      case Grade.third:
-        return 3;
-      case Grade.fourth:
-        return 4;
+      case Grade.kindergarten: return 0;
+      case Grade.first:        return 1;
+      case Grade.second:       return 2;
+      case Grade.third:        return 3;
+      case Grade.fourth:       return 4;
     }
   }
 }

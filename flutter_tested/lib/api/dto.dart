@@ -1,22 +1,14 @@
-/// =============================================================================
-/// Data Transfer Objects (DTOs) for API Communication
-/// =============================================================================
-/// 🔄 UPDATED: Added student tracking, analytics, progress
-/// =============================================================================
-
 import 'api_config.dart';
 
-// =============================================================================
-// REQUESTS
-// =============================================================================
+// Requests
 
 class StartSessionRequest {
-  final String studentId;      // 🆕 NEW
-  final String studentName;    // 🆕 NEW
+  final String studentId;
+  final String studentName;
   final int grade;
   final String subject;
   final String lesson;
-  final bool forceNew;         // 🆕 NEW: Force new session even if saved exists
+  final bool forceNew;
 
   StartSessionRequest({
     required this.studentId,
@@ -96,9 +88,7 @@ class EndSessionRequest {
   };
 }
 
-// =============================================================================
-// RESPONSES
-// =============================================================================
+// Responses
 
 /// One display-ready message segment returned by the backend splitter.
 class MessageChunk {
@@ -113,14 +103,13 @@ class MessageChunk {
       );
 }
 
-/// Learno's response (text + split message chunks + optional image)
 class LearnoResponse {
-  final String text;              // full text — fallback for TTS and older clients
-  final List<MessageChunk> messages; // sequential chunks for display
+  final String text;
+  final List<MessageChunk> messages;
   final String responseType;
   final String? imageReference;
   final String? generatedImageUrl;
-  final int? imagePosition;       // chunk index after which the image appears
+  final int? imagePosition;
 
   LearnoResponse({
     required this.text,
@@ -150,8 +139,7 @@ class LearnoResponse {
   bool get hasMessages => messages.isNotEmpty;
   bool get hasImage => generatedImageUrl != null || imageReference != null;
 
-  /// Returns a fully-qualified image URL.
-  /// Relative paths (e.g. /static/...) are resolved against the backend root.
+  /// Resolves relative paths (e.g. /static/...) against the backend root.
   String? get displayImageUrl {
     final url = generatedImageUrl ?? imageReference;
     if (url == null) return null;
@@ -160,7 +148,6 @@ class LearnoResponse {
   }
 }
 
-/// Progress tracking
 class ProgressData {
   final String lessonPhase;
   final int currentConcept;
@@ -169,8 +156,8 @@ class ProgressData {
   final int totalCorrect;
   final int totalWrong;
   final int conceptsCompleted;
-  final String studentLevel;      // 🆕 NEW
-  final String teachingStyle;     // 🆕 NEW
+  final String studentLevel;
+  final String teachingStyle;
 
   ProgressData({
     required this.lessonPhase,
@@ -198,11 +185,10 @@ class ProgressData {
     );
   }
 
-  double get progressPercent => 
+  double get progressPercent =>
       totalConcepts > 0 ? currentConcept / totalConcepts : 0.0;
 }
 
-/// Student analytics 🆕 NEW
 class StudentAnalytics {
   final String learningLevel;
   final String teachingStyle;
@@ -238,14 +224,13 @@ class StudentAnalytics {
   }
 }
 
-/// Start session response
 class StartSessionResponse {
   final String status;
   final String message;
   final String sessionId;
   final LearnoResponse learnoResponse;
   final ProgressData? progress;
-  final StudentAnalytics? analytics;  // 🆕 NEW
+  final StudentAnalytics? analytics;
 
   StartSessionResponse({
     required this.status,
@@ -263,8 +248,8 @@ class StartSessionResponse {
       message: json['message'],
       sessionId: data['session_id'],
       learnoResponse: LearnoResponse.fromJson(data['learno_response']),
-      progress: data['progress'] != null 
-          ? ProgressData.fromJson(data['progress']) 
+      progress: data['progress'] != null
+          ? ProgressData.fromJson(data['progress'])
           : null,
       analytics: data['student_analytics'] != null
           ? StudentAnalytics.fromJson(data['student_analytics'])
@@ -275,14 +260,13 @@ class StartSessionResponse {
   bool get isSuccess => status == 'success';
 }
 
-/// Lesson response (continue, respond, silence)
 class LessonResponse {
   final String status;
   final String message;
   final LearnoResponse learnoResponse;
   final ProgressData? progress;
   final bool isComplete;
-  final StudentAnalytics? analytics;  // 🆕 NEW
+  final StudentAnalytics? analytics;
 
   LessonResponse({
     required this.status,
@@ -299,8 +283,8 @@ class LessonResponse {
       status: json['status'],
       message: json['message'],
       learnoResponse: LearnoResponse.fromJson(data['learno_response']),
-      progress: data['progress'] != null 
-          ? ProgressData.fromJson(data['progress']) 
+      progress: data['progress'] != null
+          ? ProgressData.fromJson(data['progress'])
           : null,
       isComplete: data['is_complete'] ?? false,
       analytics: data['student_analytics'] != null
@@ -312,7 +296,6 @@ class LessonResponse {
   bool get isSuccess => status == 'success';
 }
 
-/// End session response
 class EndSessionResponse {
   final String status;
   final String message;
@@ -320,7 +303,7 @@ class EndSessionResponse {
   final int totalCorrect;
   final int totalQuestions;
   final bool isComplete;
-  final StudentAnalytics? analytics;  // 🆕 NEW
+  final StudentAnalytics? analytics;
 
   EndSessionResponse({
     required this.status,
@@ -350,7 +333,6 @@ class EndSessionResponse {
   bool get isSuccess => status == 'success';
 }
 
-/// One topic in the curriculum
 class TopicData {
   final String topicId;
   final String nameEn;
@@ -375,7 +357,6 @@ class TopicData {
       );
 }
 
-/// Silence response (hint)
 class SilenceResponse {
   final String status;
   final String message;
@@ -397,8 +378,8 @@ class SilenceResponse {
       learnoResponse: data['learno_response'] != null
           ? LearnoResponse.fromJson(data['learno_response'])
           : null,
-      progress: data['progress'] != null 
-          ? ProgressData.fromJson(data['progress']) 
+      progress: data['progress'] != null
+          ? ProgressData.fromJson(data['progress'])
           : null,
     );
   }

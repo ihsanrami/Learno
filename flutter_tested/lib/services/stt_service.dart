@@ -1,11 +1,3 @@
-/// =============================================================================
-/// STT Service - Speech-to-Text for Learno
-/// =============================================================================
-/// Handles voice input - captures child's spoken answers.
-/// Supports locale switching for bilingual (English/Arabic) sessions.
-/// =============================================================================
-
-import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
@@ -19,38 +11,31 @@ class STTService {
   bool _isInitialized = false;
   bool _isListening = false;
 
-  // Active locale — updated via setLocale() when app language changes.
+  // Active locale — call setLocale() when the app language changes.
   String _localeId = 'en_US';
 
-  // Callbacks
   Function(String text, bool isFinal)? onResult;
   Function(String error)? onError;
   Function()? onListeningStarted;
   Function()? onListeningStopped;
 
-  /// Switch the recognition locale.  Call this whenever the app language changes.
-  /// [languageCode] should be 'en' or 'ar'.
   void setLocale(String languageCode) {
     _localeId = languageCode == 'ar' ? 'ar_SA' : 'en_US';
   }
 
-  /// Initialize STT
   Future<bool> init() async {
     if (_isInitialized) return true;
-
     try {
       _isInitialized = await _stt.initialize(
         onError: _handleError,
         onStatus: _handleStatus,
       );
       return _isInitialized;
-    } catch (e) {
-      debugPrint('STT init error: $e');
+    } catch (_) {
       return false;
     }
   }
 
-  /// Start listening using the current locale.
   Future<void> startListening() async {
     if (!_isInitialized) {
       final success = await init();
@@ -74,32 +59,25 @@ class STTService {
       _isListening = true;
       onListeningStarted?.call();
     } catch (e) {
-      debugPrint('STT listen error: $e');
       onError?.call(e.toString());
     }
   }
 
-  /// Stop listening
   Future<void> stopListening() async {
     if (!_isListening) return;
     try {
       await _stt.stop();
       _isListening = false;
       onListeningStopped?.call();
-    } catch (e) {
-      debugPrint('STT stop error: $e');
-    }
+    } catch (_) {}
   }
 
-  /// Cancel listening
   Future<void> cancelListening() async {
     try {
       await _stt.cancel();
       _isListening = false;
       onListeningStopped?.call();
-    } catch (e) {
-      debugPrint('STT cancel error: $e');
-    }
+    } catch (_) {}
   }
 
   void _handleResult(SpeechRecognitionResult result) {

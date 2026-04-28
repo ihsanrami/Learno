@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:learno/l10n/app_localizations.dart';
 
 import '../../controllers/auth_controller.dart';
 
@@ -24,9 +24,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
   final _nameCtrl = TextEditingController();
   final _controller = AuthController();
 
-  int _selectedAge = 6;
-  String _selectedGrade = 'first';
   String _selectedAvatar = 'fox';
+  int _selectedAge = 7;
+  String _selectedGrade = 'first';
   bool _isLoading = false;
   String? _error;
 
@@ -50,7 +50,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
     );
     if (!mounted) return;
     if (ok) {
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     } else {
       setState(() {
         _isLoading = false;
@@ -64,7 +64,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     final gradeOptions = [
-      ('kindergarten', l10n.kindergarten),
+      ('kg', 'Kindergarten'),
       ('first', l10n.firstGrade),
       ('second', l10n.secondGrade),
       ('third', l10n.thirdGrade),
@@ -72,6 +72,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
     ];
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           Positioned.fill(
@@ -79,6 +81,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 Image.asset('assets/images/background.png', fit: BoxFit.cover),
           ),
           SafeArea(
+            bottom: false,
             child: Column(
               children: [
                 Padding(
@@ -184,7 +187,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                                   color: Color(0xFF76310F), fontSize: 15),
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
                         ],
                       ),
                     ),
@@ -241,8 +244,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
           onTap: () => setState(() => _selectedAvatar = key),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            width: 52,
-            height: 52,
+            width: 46,
+            height: 46,
             decoration: BoxDecoration(
               color: isSelected
                   ? const Color(0xFFFF8D00).withOpacity(0.2)
@@ -256,7 +259,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
               ),
             ),
             child: Center(
-              child: Text(emoji, style: const TextStyle(fontSize: 26)),
+              child: Text(emoji, style: const TextStyle(fontSize: 24)),
             ),
           ),
         );

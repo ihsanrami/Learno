@@ -1,0 +1,83 @@
+Flutter crash report.
+Please report a bug at https://github.com/flutter/flutter/issues.
+
+## command
+
+flutter analyze
+
+## exception
+
+_Exception: Exception: analysis server exited with code 64 and output:
+[stderr] Project
+[stderr]   build       Build a Dart application including code assets.
+[stderr]   compile     Compile Dart to various formats.
+[stderr]   create      Create a new Dart project.
+[stderr]   pub         Work with packages.
+[stderr]   run         Run a Dart program.
+[stderr]   test        Run tests for a project.
+[stderr] 
+[stderr] Source code
+[stderr]   analyze     Analyze Dart code in a directory.
+[stderr]   doc         Generate API documentation for Dart projects.
+[stderr]   fix         Apply automated fixes to Dart source code.
+[stderr]   format      Idiomatically format Dart source code.
+[stderr] 
+[stderr] Tools
+[stderr]   devtools    Open DevTools (optionally connecting to an existing application).
+[stderr]   info        Show diagnostic information about the installed tooling.
+[stderr] 
+[stderr] Run "dart help <command>" for more information about a command.
+[stderr] See https://dart.dev/tools/dart-tool for detailed documentation.
+
+```
+```
+
+## flutter doctor
+
+```
+[!] Flutter (Channel stable, 3.38.5, on Microsoft Windows [Version 10.0.26200.8037], locale en-US) [632ms]
+    • Flutter version 3.38.5 on channel stable at C:\flutter
+    ! Warning: `dart` on your path resolves to C:\dart-sdk\bin\dart.exe, which is not inside your current Flutter SDK checkout at C:\flutter. Consider adding C:\flutter\bin to the front of your path.
+    • Upstream repository https://github.com/flutter/flutter.git
+    • Framework revision f6ff1529fd (), 2025-12-11 11:50:07 -0500
+    • Engine revision 1527ae0ec5
+    • Dart version 3.10.4
+    • DevTools version 2.51.1
+    • Feature flags: enable-web, enable-linux-desktop, enable-macos-desktop, enable-windows-desktop, enable-android, enable-ios, cli-animations, enable-native-assets, omit-legacy-version-file, enable-lldb-debugging
+    • If those were intentional, you can disregard the above warnings; however it is recommended to use "git" directly to perform update checks and upgrades.
+
+[✓] Windows Version (Windows 11 or higher, 25H2, 2009) [1,323ms]
+
+[✓] Android toolchain - develop for Android devices (Android SDK version 36.1.0) [9.4s]
+    • Android SDK at C:\Users\VICTUS\AppData\Local\Android\Sdk
+    • Emulator version 36.3.10.0 (build_id 14472402) (CL:N/A)
+    • Platform android-36, build-tools 36.1.0
+    • ANDROID_HOME = C:\Users\VICTUS\AppData\Local\Android\Sdk
+    • Java binary at: C:\Program Files\Android\Android Studio1\jbr\bin\java
+      This is the JDK bundled with the latest Android Studio installation on this machine.
+      To manually set the JDK path, use: `flutter config --jdk-dir="path/to/jdk"`.
+    • Java version OpenJDK Runtime Environment (build 21.0.8+-14196175-b1038.72)
+    • All Android licenses accepted.
+
+[✓] Chrome - develop for the web [388ms]
+    • Chrome at C:\Program Files\Google\Chrome\Application\chrome.exe
+
+[!] Visual Studio - develop Windows apps (Visual Studio Community 2022 17.14.18 (October 2025)) [387ms]
+    • Visual Studio at C:\Program Files\Microsoft Visual Studio\2022\Community
+    • Visual Studio Community 2022 version 17.14.36616.10
+    ✗ Visual Studio is missing necessary components. Please re-run the Visual Studio installer for the "Desktop development with C++" workload, and include these components:
+        MSVC v142 - VS 2019 C++ x64/x86 build tools
+         - If there are multiple build tool versions available, install the latest
+        C++ CMake tools for Windows
+        Windows 10 SDK
+
+[✓] Connected device (3 available) [2.3s]
+    • Windows (desktop) • windows • windows-x64    • Microsoft Windows [Version 10.0.26200.8037]
+    • Chrome (web)      • chrome  • web-javascript • Google Chrome 147.0.7727.56
+    • Edge (web)        • edge    • web-javascript • Microsoft Edge 146.0.3856.97
+
+[✓] Network resources [707ms]
+    • All expected network resources are available.
+
+! Doctor found issues in 2 categories.
+```

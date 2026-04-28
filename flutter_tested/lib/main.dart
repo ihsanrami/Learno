@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:learno/l10n/app_localizations.dart';
 
 import 'controllers/locale_controller.dart';
 import 'screens/auth/splash_screen.dart';
@@ -10,6 +10,14 @@ import 'services/student_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.dark,
+    statusBarIconBrightness: Brightness.dark,
+  ));
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
