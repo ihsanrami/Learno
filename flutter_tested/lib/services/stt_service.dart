@@ -23,6 +23,10 @@ class STTService {
     _localeId = languageCode == 'ar' ? 'ar_SA' : 'en_US';
   }
 
+  void setSubjectLocale(String subject) {
+    _localeId = subject.toLowerCase() == 'arabic' ? 'ar_SA' : 'en_US';
+  }
+
   Future<bool> init() async {
     if (_isInitialized) return true;
     try {

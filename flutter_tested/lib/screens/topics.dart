@@ -131,16 +131,25 @@ class _TopicsScreenState extends State<TopicsScreen> {
                 if (!_isLoading && _errorMessage == null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 20),
-                    child: GestureDetector(
-                      onTap: _selectedIndex == null ? null : _startLesson,
-                      child: Opacity(
-                        opacity: _selectedIndex == null ? 0.4 : 1.0,
-                        child: Image.asset(
-                          'assets/images/continue.png',
-                          width: MediaQuery.of(context).size.width * 0.30,
-                          fit: BoxFit.contain,
+                    child: ElevatedButton(
+                      onPressed: _selectedIndex == null ? null : _startLesson,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF8D00),
+                        foregroundColor: const Color(0xFF44200B),
+                        disabledBackgroundColor:
+                            const Color(0xFFFF8D00).withOpacity(0.4),
+                        elevation: 4,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 48, vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30)),
+                        textStyle: const TextStyle(
+                          fontFamily: 'Recoleta',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 22,
                         ),
                       ),
+                      child: Text(l10n.continueButton),
                     ),
                   ),
                 const SizedBox(height: 50),
@@ -211,6 +220,10 @@ class _TopicsScreenState extends State<TopicsScreen> {
         final isSelected = _selectedIndex == index;
         final topic = _topics[index];
         final color = _topicColors[index % _topicColors.length];
+        final locale = Localizations.localeOf(context);
+        final topicName = locale.languageCode == 'ar' && topic.nameAr.isNotEmpty
+            ? topic.nameAr
+            : topic.nameEn;
 
         return GestureDetector(
           onTap: () => setState(() => _selectedIndex = index),
@@ -238,7 +251,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    topic.nameEn,
+                    topicName,
                     style: const TextStyle(
                       fontFamily: 'Recoleta',
                       fontWeight: FontWeight.w400,

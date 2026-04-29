@@ -72,6 +72,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _initServices() async {
     await _tts.init();
+    final subject = SessionState.subject?.name ?? '';
+    await _tts.setSubjectLanguage(subject);
+    _stt.setSubjectLocale(subject);
     _tts.onStart = () => setState(() => _isSpeaking = true);
     _tts.onComplete = () {
       setState(() => _isSpeaking = false);

@@ -203,7 +203,9 @@ class DynamicLessonService:
         messages = build_welcome_prompt(
             chapter_title=chapter.chapter_title,
             welcome_script=chapter.welcome_script,
-            chapter_overview=chapter.chapter_overview
+            chapter_overview=chapter.chapter_overview,
+            grade=grade,
+            subject=subject,
         )
 
         ai_text = self.ai_client.generate_response(messages)
@@ -278,10 +280,13 @@ class DynamicLessonService:
 
     def _do_introduction(self, session_id: str, state: TeachingState,
                          concept: ConceptContent, chapter: ChapterContent) -> LearnoResponse:
+        session = self.session_service.get_session(session_id)
         messages = build_concept_introduction_prompt(
             concept_name=concept.concept_name,
             learning_objective=concept.learning_objective,
-            introduction_script=concept.introduction_script
+            introduction_script=concept.introduction_script,
+            grade=session.grade,
+            subject=session.subject,
         )
         ai_text = self.ai_client.generate_response(messages)
         clean_text, image_url = self._process_response(ai_text)
@@ -297,11 +302,14 @@ class DynamicLessonService:
 
     def _do_explanation(self, session_id: str, state: TeachingState,
                         concept: ConceptContent, chapter: ChapterContent) -> LearnoResponse:
+        session = self.session_service.get_session(session_id)
         messages = build_explanation_prompt(
             concept_name=concept.concept_name,
             explanation_script=concept.explanation_script,
             key_points=concept.key_points,
-            examples=concept.examples
+            examples=concept.examples,
+            grade=session.grade,
+            subject=session.subject,
         )
         ai_text = self.ai_client.generate_response(messages)
         clean_text, image_url = self._process_response(ai_text)
@@ -317,10 +325,13 @@ class DynamicLessonService:
 
     def _do_visual_example(self, session_id: str, state: TeachingState,
                            concept: ConceptContent, chapter: ChapterContent) -> LearnoResponse:
+        session = self.session_service.get_session(session_id)
         messages = build_visual_explanation_prompt(
             concept_name=concept.concept_name,
             visual_description=concept.visual_description,
-            visual_explanation=concept.visual_explanation
+            visual_explanation=concept.visual_explanation,
+            grade=session.grade,
+            subject=session.subject,
         )
         ai_text = self.ai_client.generate_response(messages)
         clean_text = self.image_service.remove_image_marker(ai_text)
@@ -345,10 +356,13 @@ class DynamicLessonService:
 
         question = concept.guided_questions[state.guided_question_index]
 
+        session = self.session_service.get_session(session_id)
         messages = build_guided_practice_prompt(
             question=question,
             concept_name=concept.concept_name,
-            is_first=(state.guided_question_index == 0)
+            is_first=(state.guided_question_index == 0),
+            grade=session.grade,
+            subject=session.subject,
         )
         ai_text = self.ai_client.generate_response(messages)
         clean_text, image_url = self._process_response(ai_text, question.image_prompt)
@@ -372,11 +386,14 @@ class DynamicLessonService:
 
         question = concept.independent_questions[state.independent_question_index]
 
+        session = self.session_service.get_session(session_id)
         messages = build_independent_practice_prompt(
             question=question,
             concept_name=concept.concept_name,
             question_number=state.independent_question_index + 1,
-            total_questions=len(concept.independent_questions)
+            total_questions=len(concept.independent_questions),
+            grade=session.grade,
+            subject=session.subject,
         )
         ai_text = self.ai_client.generate_response(messages)
         clean_text, image_url = self._process_response(ai_text, question.image_prompt)
@@ -394,9 +411,12 @@ class DynamicLessonService:
 
     def _do_mastery_check(self, session_id: str, state: TeachingState,
                           concept: ConceptContent, chapter: ChapterContent) -> LearnoResponse:
+        session = self.session_service.get_session(session_id)
         messages = build_mastery_check_prompt(
             concept_name=concept.concept_name,
-            question=concept.mastery_check_question
+            question=concept.mastery_check_question,
+            grade=session.grade,
+            subject=session.subject,
         )
         ai_text = self.ai_client.generate_response(messages)
         clean_text, image_url = self._process_response(ai_text)
@@ -420,10 +440,13 @@ class DynamicLessonService:
 
         question = chapter.review_questions[state.review_question_index]
 
+        session = self.session_service.get_session(session_id)
         messages = build_chapter_review_prompt(
             question=question,
             question_number=state.review_question_index + 1,
-            total_questions=len(chapter.review_questions)
+            total_questions=len(chapter.review_questions),
+            grade=session.grade,
+            subject=session.subject,
         )
         ai_text = self.ai_client.generate_response(messages)
         clean_text, image_url = self._process_response(ai_text)
@@ -441,10 +464,13 @@ class DynamicLessonService:
 
     def _do_celebration(self, session_id: str, state: TeachingState,
                         chapter: ChapterContent) -> LearnoResponse:
+        session = self.session_service.get_session(session_id)
         messages = build_celebration_prompt(
             completion_script=chapter.completion_script,
             total_correct=state.total_correct,
-            total_questions=state.total_correct + state.total_wrong
+            total_questions=state.total_correct + state.total_wrong,
+            grade=session.grade,
+            subject=session.subject,
         )
         ai_text = self.ai_client.generate_response(messages)
         clean_text, image_url = self._process_response(ai_text)
@@ -495,7 +521,7 @@ class DynamicLessonService:
 
         if is_correct:
             state.record_correct()
-            return self._handle_correct_answer(session_id, state, chapter)
+            return self._handle_correct_answer(session_id, state, chapter, transcript)
         else:
             state.record_wrong()
             return self._handle_wrong_answer(session_id, state, chapter, transcript)
@@ -521,13 +547,20 @@ class DynamicLessonService:
         return False
 
     def _handle_correct_answer(self, session_id: str, state: TeachingState,
-                                chapter: ChapterContent) -> LearnoResponse:
+                                chapter: ChapterContent, transcript: str = "") -> LearnoResponse:
+        session = self.session_service.get_session(session_id)
         concept = None
         if state.current_concept_index < chapter.total_concepts:
             concept = chapter.concepts[state.current_concept_index]
 
         phrases = concept.encouragement_phrases if concept else ["Great job! 🎉"]
-        messages = build_encouragement_prompt(is_correct=True, encouragement_phrases=phrases)
+        messages = build_encouragement_prompt(
+            is_correct=True,
+            encouragement_phrases=phrases,
+            grade=session.grade,
+            subject=session.subject,
+            child_transcript=transcript,
+        )
         ai_text = self.ai_client.generate_response(messages)
         praise_text, _ = self._process_response(ai_text)
 
@@ -548,12 +581,15 @@ class DynamicLessonService:
 
     def _handle_wrong_answer(self, session_id: str, state: TeachingState,
                               chapter: ChapterContent, transcript: str) -> LearnoResponse:
+        session = self.session_service.get_session(session_id)
         messages = build_hint_prompt(
             child_answer=transcript,
             expected_answer=state.current_expected_answer or "",
             hint_text=state.current_hint,
             attempt_count=state.current_attempts,
-            needs_extra_help=state.needs_extra_help
+            needs_extra_help=state.needs_extra_help,
+            grade=session.grade,
+            subject=session.subject,
         )
         ai_text = self.ai_client.generate_response(messages)
         clean_text, image_url = self._process_response(ai_text)
@@ -590,7 +626,9 @@ class DynamicLessonService:
             hint_text=hint_text,
             attempt_count=0,
             needs_extra_help=False,
-            is_silence=True
+            is_silence=True,
+            grade=session.grade,
+            subject=session.subject,
         )
         ai_text = self.ai_client.generate_response(messages)
         clean_text, image_url = self._process_response(ai_text)

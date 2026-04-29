@@ -52,5 +52,5 @@ class ApiConfig {
   // Lesson endpoints invoke GPT-4 which can take ~47s; 2-minute headroom.
   static const Duration lessonTimeout = Duration(seconds: 120);
 
-  static const int silenceThresholdSeconds = 18;
+  static const int silenceThresholdSeconds = 60;
 }

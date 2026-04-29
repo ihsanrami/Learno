@@ -275,7 +275,9 @@ Example: [GENERATE_IMAGE: 3 red apples in a row, cartoon style]
 def build_welcome_prompt(
     chapter_title: str,
     welcome_script: str,
-    chapter_overview: str
+    chapter_overview: str,
+    grade: int = 2,
+    subject: str = "",
 ) -> List[Dict[str, str]]:
     user_prompt = f"""START a new learning adventure!
 
@@ -304,7 +306,7 @@ RULES:
 """
 
     return [
-        {"role": "system", "content": LEARNO_TEACHER_PROMPT},
+        {"role": "system", "content": get_system_prompt_for_grade(grade, subject)},
         {"role": "user", "content": user_prompt}
     ]
 
@@ -316,7 +318,9 @@ RULES:
 def build_concept_introduction_prompt(
     concept_name: str,
     learning_objective: str,
-    introduction_script: str
+    introduction_script: str,
+    grade: int = 2,
+    subject: str = "",
 ) -> List[Dict[str, str]]:
     user_prompt = f"""INTRODUCE a new concept to the child!
 
@@ -343,7 +347,7 @@ RULES:
 """
 
     return [
-        {"role": "system", "content": LEARNO_TEACHER_PROMPT},
+        {"role": "system", "content": get_system_prompt_for_grade(grade, subject)},
         {"role": "user", "content": user_prompt}
     ]
 
@@ -352,7 +356,9 @@ def build_explanation_prompt(
     concept_name: str,
     explanation_script: str,
     key_points: List[str],
-    examples: List[Dict[str, str]]
+    examples: List[Dict[str, str]],
+    grade: int = 2,
+    subject: str = "",
 ) -> List[Dict[str, str]]:
     key_points_text = "\n".join([f"- {point}" for point in key_points])
 
@@ -391,7 +397,7 @@ RULES:
 """
 
     return [
-        {"role": "system", "content": LEARNO_TEACHER_PROMPT},
+        {"role": "system", "content": get_system_prompt_for_grade(grade, subject)},
         {"role": "user", "content": user_prompt}
     ]
 
@@ -399,7 +405,9 @@ RULES:
 def build_visual_explanation_prompt(
     concept_name: str,
     visual_description: str,
-    visual_explanation: str
+    visual_explanation: str,
+    grade: int = 2,
+    subject: str = "",
 ) -> List[Dict[str, str]]:
     user_prompt = f"""SHOW and EXPLAIN a picture to teach this concept!
 
@@ -439,7 +447,7 @@ RULES:
 """
 
     return [
-        {"role": "system", "content": LEARNO_TEACHER_PROMPT},
+        {"role": "system", "content": get_system_prompt_for_grade(grade, subject)},
         {"role": "user", "content": user_prompt}
     ]
 
@@ -451,7 +459,9 @@ RULES:
 def build_guided_practice_prompt(
     question: PracticeQuestion,
     concept_name: str,
-    is_first: bool = True
+    is_first: bool = True,
+    grade: int = 2,
+    subject: str = "",
 ) -> List[Dict[str, str]]:
     """Guided practice - teacher helps"""
     
@@ -491,7 +501,7 @@ RULES:
 """
 
     return [
-        {"role": "system", "content": LEARNO_TEACHER_PROMPT},
+        {"role": "system", "content": get_system_prompt_for_grade(grade, subject)},
         {"role": "user", "content": user_prompt}
     ]
 
@@ -500,7 +510,9 @@ def build_independent_practice_prompt(
     question: PracticeQuestion,
     concept_name: str,
     question_number: int,
-    total_questions: int
+    total_questions: int,
+    grade: int = 2,
+    subject: str = "",
 ) -> List[Dict[str, str]]:
     """Independent practice - child tries alone"""
     
@@ -537,14 +549,16 @@ RULES:
 """
 
     return [
-        {"role": "system", "content": LEARNO_TEACHER_PROMPT},
+        {"role": "system", "content": get_system_prompt_for_grade(grade, subject)},
         {"role": "user", "content": user_prompt}
     ]
 
 
 def build_mastery_check_prompt(
     concept_name: str,
-    question: str
+    question: str,
+    grade: int = 2,
+    subject: str = "",
 ) -> List[Dict[str, str]]:
     """Mastery check before moving to next concept"""
     
@@ -573,7 +587,7 @@ RULES:
 """
 
     return [
-        {"role": "system", "content": LEARNO_TEACHER_PROMPT},
+        {"role": "system", "content": get_system_prompt_for_grade(grade, subject)},
         {"role": "user", "content": user_prompt}
     ]
 
@@ -585,7 +599,9 @@ RULES:
 def build_chapter_review_prompt(
     question: PracticeQuestion,
     question_number: int,
-    total_questions: int
+    total_questions: int,
+    grade: int = 2,
+    subject: str = "",
 ) -> List[Dict[str, str]]:
     """Chapter review question"""
     
@@ -613,7 +629,7 @@ RULES:
 """
 
     return [
-        {"role": "system", "content": LEARNO_TEACHER_PROMPT},
+        {"role": "system", "content": get_system_prompt_for_grade(grade, subject)},
         {"role": "user", "content": user_prompt}
     ]
 
@@ -621,7 +637,9 @@ RULES:
 def build_celebration_prompt(
     completion_script: str,
     total_correct: int,
-    total_questions: int
+    total_questions: int,
+    grade: int = 2,
+    subject: str = "",
 ) -> List[Dict[str, str]]:
     """Celebration - lesson complete!"""
     
@@ -660,7 +678,7 @@ RULES:
 """
 
     return [
-        {"role": "system", "content": LEARNO_TEACHER_PROMPT},
+        {"role": "system", "content": get_system_prompt_for_grade(grade, subject)},
         {"role": "user", "content": user_prompt}
     ]
 
@@ -671,11 +689,24 @@ RULES:
 
 def build_encouragement_prompt(
     is_correct: bool,
-    encouragement_phrases: List[str]
+    encouragement_phrases: List[str],
+    grade: int = 2,
+    subject: str = "",
+    child_transcript: str = "",
 ) -> List[Dict[str, str]]:
     phrases_text = "\n".join([f'- "{phrase}"' for phrase in encouragement_phrases[:3]])
 
+    transcript_note = ""
+    if child_transcript.strip():
+        transcript_note = f"""
+WHAT THE CHILD SAID: "{child_transcript}"
+⚠️ YOU MUST reference THEIR SPECIFIC WORDS in your celebration.
+Example: If they said "because the sun is hot", say something like:
+"Yes! You said 'the sun is hot' — that's EXACTLY it! 🎯🌟"
+Never give a generic response when you know what they said."""
+
     user_prompt = f"""CELEBRATE a correct answer — make the child feel AMAZING!
+{transcript_note}
 
 SUGGESTED PHRASES (pick one OR create a fresh one — vary it every time!):
 {phrases_text}
@@ -689,24 +720,27 @@ ALSO CONSIDER these celebration styles (rotate through them):
 - "Incredible! ✨ You understood it perfectly!"
 - "🦊 Even I'm impressed! Amazing work!"
 - "Outstanding! 💪 You're really getting it!"
+- "Oh! You said [their exact words] — that's EXACTLY right! 🎯"
 
 YOUR TASK:
-1. Pick a celebration style that you haven't used yet (VARY it!)
-2. Keep it short, genuine, and exciting
-3. Use 3-5 varied emojis that match the energy
+1. Reference what the child specifically said (if provided above)
+2. Pick a celebration style that you haven't used yet (VARY it!)
+3. Keep it short, genuine, and exciting
+4. Use 3-5 varied emojis that match the energy
 
 FORMAT:
-"[Unique celebration]! [emoji] [Short genuine praise]! [emoji]"
+"[Quote or reference their words if available]! [emoji] [Short genuine praise]! [emoji]"
 
 RULES:
 ✅ 3-5 varied emojis — change them each time
 ✅ Genuinely enthusiastic — not robotic
-✅ Under 15 words
+✅ Reference child's exact words when available
+✅ Under 20 words
 ✅ NEVER repeat the exact same phrase as before
 """
 
     return [
-        {"role": "system", "content": LEARNO_TEACHER_PROMPT},
+        {"role": "system", "content": get_system_prompt_for_grade(grade, subject)},
         {"role": "user", "content": user_prompt}
     ]
 
@@ -717,7 +751,9 @@ def build_hint_prompt(
     hint_text: str,
     attempt_count: int,
     needs_extra_help: bool,
-    is_silence: bool = False
+    is_silence: bool = False,
+    grade: int = 2,
+    subject: str = "",
 ) -> List[Dict[str, str]]:
     if is_silence:
         situation = "The child has been quiet and needs a gentle, patient nudge."
@@ -770,6 +806,6 @@ RULES:
 """
 
     return [
-        {"role": "system", "content": LEARNO_TEACHER_PROMPT},
+        {"role": "system", "content": get_system_prompt_for_grade(grade, subject)},
         {"role": "user", "content": user_prompt}
     ]

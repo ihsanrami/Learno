@@ -23,6 +23,13 @@ class TTSService {
     }
   }
 
+  Future<void> setSubjectLanguage(String subject) async {
+    _language = subject.toLowerCase() == 'arabic' ? 'ar-SA' : 'en-US';
+    if (_isInitialized) {
+      await _tts.setLanguage(_language);
+    }
+  }
+
   Future<void> init() async {
     if (_isInitialized) return;
     try {
