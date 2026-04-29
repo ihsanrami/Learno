@@ -61,12 +61,11 @@ class _LoginScreenState extends State<LoginScreen> {
       extendBodyBehindAppBar: true,
       extendBody: true,
       resizeToAvoidBottomInset: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFFFEDDC),
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          Positioned.fill(
-            child: Image.asset('assets/images/background.png', fit: BoxFit.cover),
-          ),
+          Image.asset('assets/images/background.png', fit: BoxFit.cover),
           SafeArea(
             bottom: false,
             child: SingleChildScrollView(

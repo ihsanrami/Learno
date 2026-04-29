@@ -198,12 +198,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _handleAfterSequenceComplete() {
-    if (_waitingForAnswer) {
-      _startSilenceTimer();
-      if (_isVoiceMode) _startListening();
-    } else {
-      _continueTeaching();
-    }
+    // Always wait for the child's response — never auto-advance.
+    // Teaching phases and question phases both require the child to speak.
+    // Silence is handled separately by _startSilenceTimer → _handleSilence.
+    _startSilenceTimer();
+    if (_isVoiceMode) _startListening();
   }
 
   Future<void> _continueTeaching() async {
@@ -365,14 +364,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   bool _isQuestionType(String responseType) {
-    const questionTypes = [
-      'guided_practice',
-      'independent_practice',
-      'mastery_check',
-      'chapter_review',
-      'question',
-    ];
-    return questionTypes.contains(responseType);
+    // Every AI message requires the child to respond.
+    // The silence timer and STT are activated after all response types.
+    return true;
   }
 
   void _handleLessonComplete() {

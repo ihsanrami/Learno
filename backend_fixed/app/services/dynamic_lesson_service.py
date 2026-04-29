@@ -42,6 +42,14 @@ from app.utils.exceptions import LessonNotAvailableError
 
 logger = logging.getLogger(__name__)
 
+# Phases where the AI is presenting content (not asking a question with a right/wrong answer).
+# Any child response during these phases means "I'm ready — continue teaching."
+_TEACHING_PHASES = {
+    ConceptPhase.INTRODUCTION,
+    ConceptPhase.EXPLANATION,
+    ConceptPhase.VISUAL_EXAMPLE,
+}
+
 
 @dataclass
 class TeachingState:
@@ -458,12 +466,31 @@ class DynamicLessonService:
         )
 
     def process_response(self, session_id: str, transcript: str) -> LearnoResponse:
-        """Process child's answer"""
+        """Process child's response.
 
+        During teaching phases (introduction, explanation, visual) any response
+        from the child means they are ready to continue — we advance to the next
+        phase rather than evaluating a right/wrong answer.
+
+        During practice phases (guided, independent, mastery, review) the
+        transcript is evaluated normally.
+        """
         session = self.session_service.get_session(session_id)
         state = self._get_state(session_id)
         chapter = self._get_chapter_for_session(session.grade, session.subject, session.lesson)
 
+        # Teaching phase: child acknowledged/responded → advance to next content.
+        # Guard against chapter-review and celebration where concept_phase may
+        # still read INTRODUCTION due to the state machine internals.
+        in_review_or_done = state.lesson_phase in {
+            LessonPhase.CHAPTER_REVIEW,
+            LessonPhase.CELEBRATION,
+            LessonPhase.COMPLETED,
+        }
+        if state.concept_phase in _TEACHING_PHASES and not in_review_or_done:
+            return self.continue_teaching(session_id)
+
+        # Practice / review phase: evaluate answer normally.
         is_correct = self._evaluate_answer(transcript, state)
 
         if is_correct:
