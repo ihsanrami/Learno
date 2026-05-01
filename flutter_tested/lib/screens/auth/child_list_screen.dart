@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:learno/l10n/app_localizations.dart';
 
 import '../../controllers/auth_controller.dart';
+import '../../core/session_state.dart';
 import '../../services/auth_service.dart';
 import '../../utils/grade_utils.dart';
 import '../grades.dart';
@@ -45,6 +46,7 @@ class _ChildListScreenState extends State<ChildListScreen> {
 
   void _selectChild(ChildModel child) {
     _controller.selectChild(child);
+    SessionState.childName = child.name;
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const GradesScreen()),

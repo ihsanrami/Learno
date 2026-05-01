@@ -15,7 +15,7 @@ class Settings:
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o")
     OPENAI_MAX_TOKENS: int = int(os.getenv("OPENAI_MAX_TOKENS", "700"))
-    OPENAI_TEMPERATURE: float = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
+    OPENAI_TEMPERATURE: float = float(os.getenv("OPENAI_TEMPERATURE", "0.85"))
 
     SESSION_TIMEOUT_SECONDS: int = int(os.getenv("SESSION_TIMEOUT_SECONDS", "1800"))
     SILENCE_THRESHOLD_SECONDS: int = int(os.getenv("SILENCE_THRESHOLD_SECONDS", "12"))

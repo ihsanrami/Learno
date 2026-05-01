@@ -14,7 +14,7 @@ from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, field_validator
 from typing import List, Optional
 
-from app.services.dynamic_lesson_service import get_dynamic_lesson_service
+from app.services.conversational_lesson_service import get_conversational_lesson_service
 from app.models.curriculum import (
     get_topics, GradeLevel, SubjectType,
     GRADE_DISPLAY_NAMES, get_grade_display_name,
@@ -30,15 +30,17 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 class StartSessionRequest(BaseModel):
-    """Start session request with student tracking"""
+    """Start session request — conversational lesson."""
     student_id: str = "default"
-    student_name: str = "Student"
+    student_name: str = "friend"
+    child_name: str = "friend"       # child's display name used by AI
+    app_language: str = "en"         # "ar" or "en" — for math/science language
     grade: int
     subject: str
     lesson: str
     force_new: bool = False
     child_id: Optional[int] = None
-    
+
     @field_validator('student_id', mode='before')
     @classmethod
     def validate_student_id(cls, v):
@@ -46,12 +48,18 @@ class StartSessionRequest(BaseModel):
             return "default"
         return re.sub(r'[<>"\'/\\]', '', str(v).strip())[:100]
 
-    @field_validator('student_name', mode='before')
+    @field_validator('student_name', 'child_name', mode='before')
     @classmethod
-    def validate_student_name(cls, v):
+    def validate_name(cls, v):
         if not v or not str(v).strip():
-            return "Student"
+            return "friend"
         return re.sub(r'[<>"\'/\\]', '', str(v).strip())[:50]
+
+    @field_validator('app_language', mode='before')
+    @classmethod
+    def validate_language(cls, v):
+        v = str(v).strip().lower()[:5]
+        return "ar" if v.startswith("ar") else "en"
 
     @field_validator('subject', 'lesson', mode='before')
     @classmethod
@@ -122,6 +130,7 @@ class LearnoResponseData(BaseModel):
     response_type: str
     generated_image_url: Optional[str] = None
     image_position: Optional[int] = None         # chunk index after which image appears
+    lesson_language: str = "en"                  # "ar" or "en" — for TTS/STT on frontend
 
 
 class ProgressData(BaseModel):
@@ -188,32 +197,25 @@ session_router = APIRouter(prefix="/session", tags=["Session Management"])
 @session_router.post("/start", response_model=StartSessionResponse)
 @limiter.limit("30/minute")
 async def start_session(request: Request, body: StartSessionRequest):
-    """Start a new comprehensive lesson."""
+    """Start a new conversational lesson."""
+    child_name = body.child_name or body.student_name or "friend"
     logger.info(
-        f"Starting lesson: student={body.student_id}, "
-        f"grade={body.grade}, subject={body.subject}, lesson={body.lesson}"
+        f"Starting conversational lesson: child={child_name}, "
+        f"grade={body.grade}, subject={body.subject}, lesson={body.lesson}, "
+        f"app_language={body.app_language}"
     )
 
-    service = get_dynamic_lesson_service()
+    service = get_conversational_lesson_service()
 
     session, response = service.start_lesson(
         grade=body.grade,
         subject=body.subject,
         lesson=body.lesson,
+        child_name=child_name,
+        app_language=body.app_language,
         child_id=body.child_id,
     )
-    
-    progress = None
-    if response.progress_info:
-        progress = ProgressData(
-            lesson_phase=response.progress_info.get("lesson_phase", ""),
-            current_concept=response.progress_info.get("current_concept", 0),
-            total_concepts=response.progress_info.get("total_concepts", 0),
-            concept_phase=response.progress_info.get("concept_phase", ""),
-            total_correct=response.progress_info.get("total_correct", 0),
-            total_wrong=response.progress_info.get("total_wrong", 0)
-        )
-    
+
     return StartSessionResponse(
         status="success",
         message="Lesson started successfully",
@@ -228,8 +230,9 @@ async def start_session(request: Request, body: StartSessionRequest):
                 response_type=response.response_type,
                 generated_image_url=response.image_url,
                 image_position=response.image_position,
+                lesson_language=response.lesson_language,
             ),
-            progress=progress
+            progress=None,
         )
     )
 
@@ -240,7 +243,7 @@ async def end_session(request: Request, body: EndSessionRequest):
     """End the lesson session."""
     logger.info(f"Ending session: {body.session_id}")
 
-    service = get_dynamic_lesson_service()
+    service = get_conversational_lesson_service()
     summary, message = service.end_lesson(body.session_id)
     
     return EndSessionResponse(
@@ -265,39 +268,24 @@ lesson_router = APIRouter(prefix="/lesson", tags=["Lesson Interaction"])
 @lesson_router.post("/continue", response_model=DynamicLessonResponse)
 @limiter.limit("60/minute")
 async def continue_teaching(request: Request, body: ContinueRequest):
-    """Continue to next teaching step."""
-    logger.info(f"Continuing lesson: {body.session_id}")
+    """Kept for API compatibility — in conversational mode, /respond is used instead."""
+    logger.info(f"Continue (noop in conversational mode): {body.session_id}")
 
-    service = get_dynamic_lesson_service()
+    service = get_conversational_lesson_service()
     response = service.continue_teaching(body.session_id)
-    
-    progress = None
-    if response.progress_info:
-        progress = ProgressData(
-            lesson_phase=response.progress_info.get("lesson_phase", ""),
-            current_concept=response.progress_info.get("current_concept", 0),
-            total_concepts=response.progress_info.get("total_concepts", 0),
-            concept_phase=response.progress_info.get("concept_phase", ""),
-            total_correct=response.progress_info.get("total_correct", 0),
-            total_wrong=response.progress_info.get("total_wrong", 0)
-        )
-    
+
     return DynamicLessonResponse(
         status="success",
-        message="Teaching continued",
+        message="Conversational mode — use /respond",
         data=LessonResponseData(
             learno_response=LearnoResponseData(
                 text=response.text,
-                messages=[
-                    MessageChunkData(text=c.text, delay_ms=c.delay_ms)
-                    for c in response.messages
-                ],
+                messages=[],
                 response_type=response.response_type,
-                generated_image_url=response.image_url,
-                image_position=response.image_position,
+                lesson_language=response.lesson_language,
             ),
-            progress=progress,
-            is_complete=response.is_lesson_complete
+            progress=None,
+            is_complete=False,
         )
     )
 
@@ -305,26 +293,15 @@ async def continue_teaching(request: Request, body: ContinueRequest):
 @lesson_router.post("/respond", response_model=DynamicLessonResponse)
 @limiter.limit("60/minute")
 async def respond_to_question(request: Request, body: ChildResponseRequest):
-    """Process child's answer to a question."""
-    logger.info(f"Processing response: {body.session_id}")
+    """Process child's response — full conversation history sent to AI."""
+    logger.info(f"Processing response: session={body.session_id}")
 
-    service = get_dynamic_lesson_service()
+    service = get_conversational_lesson_service()
     response = service.process_response(
         session_id=body.session_id,
-        transcript=body.transcript
+        transcript=body.transcript,
     )
-    
-    progress = None
-    if response.progress_info:
-        progress = ProgressData(
-            lesson_phase=response.progress_info.get("lesson_phase", ""),
-            current_concept=response.progress_info.get("current_concept", 0),
-            total_concepts=response.progress_info.get("total_concepts", 0),
-            concept_phase=response.progress_info.get("concept_phase", ""),
-            total_correct=response.progress_info.get("total_correct", 0),
-            total_wrong=response.progress_info.get("total_wrong", 0)
-        )
-    
+
     return DynamicLessonResponse(
         status="success",
         message="Response processed",
@@ -338,9 +315,10 @@ async def respond_to_question(request: Request, body: ChildResponseRequest):
                 response_type=response.response_type,
                 generated_image_url=response.image_url,
                 image_position=response.image_position,
+                lesson_language=response.lesson_language,
             ),
-            progress=progress,
-            is_complete=response.is_lesson_complete
+            progress=None,
+            is_complete=response.is_lesson_complete,
         )
     )
 
@@ -348,29 +326,18 @@ async def respond_to_question(request: Request, body: ChildResponseRequest):
 @lesson_router.post("/silence", response_model=DynamicLessonResponse)
 @limiter.limit("30/minute")
 async def handle_silence(request: Request, body: SilenceNotificationRequest):
-    """Handle when child is silent for too long."""
-    logger.info(f"Handling silence: {body.session_id} - {body.silence_duration}s")
+    """Handle child silence — AI responds naturally with patience."""
+    logger.info(f"Handling silence: session={body.session_id} duration={body.silence_duration}s")
 
-    service = get_dynamic_lesson_service()
+    service = get_conversational_lesson_service()
     response = service.handle_silence(
         session_id=body.session_id,
-        duration=body.silence_duration
+        duration=body.silence_duration,
     )
-    
-    progress = None
-    if response.progress_info:
-        progress = ProgressData(
-            lesson_phase=response.progress_info.get("lesson_phase", ""),
-            current_concept=response.progress_info.get("current_concept", 0),
-            total_concepts=response.progress_info.get("total_concepts", 0),
-            concept_phase=response.progress_info.get("concept_phase", ""),
-            total_correct=response.progress_info.get("total_correct", 0),
-            total_wrong=response.progress_info.get("total_wrong", 0)
-        )
-    
+
     return DynamicLessonResponse(
         status="success",
-        message="Hint provided",
+        message="Silence handled",
         data=LessonResponseData(
             learno_response=LearnoResponseData(
                 text=response.text,
@@ -381,9 +348,10 @@ async def handle_silence(request: Request, body: SilenceNotificationRequest):
                 response_type=response.response_type,
                 generated_image_url=response.image_url,
                 image_position=response.image_position,
+                lesson_language=response.lesson_language,
             ),
-            progress=progress,
-            is_complete=False
+            progress=None,
+            is_complete=response.is_lesson_complete,
         )
     )
 

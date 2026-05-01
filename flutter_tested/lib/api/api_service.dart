@@ -28,13 +28,20 @@ class ApiService {
   }) async {
     final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.startSession}');
 
+    final selectedChild = AuthController().selectedChild;
+    final childName = selectedChild?.name ?? SessionState.childName;
+    final childId = selectedChild?.id;
+
     final request = StartSessionRequest(
       studentId: StudentStorage.studentId ?? 'default',
-      studentName: StudentStorage.studentName,
+      studentName: childName,
+      childName: childName,
+      appLanguage: SessionState.appLanguage,
       grade: _gradeToInt(SessionState.grade!),
       subject: SessionState.subject!.name,
       lesson: SessionState.lesson!,
       forceNew: forceNew,
+      childId: childId,
     );
 
     final response = await http

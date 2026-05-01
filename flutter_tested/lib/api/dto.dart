@@ -5,28 +5,40 @@ import 'api_config.dart';
 class StartSessionRequest {
   final String studentId;
   final String studentName;
+  final String childName;
+  final String appLanguage;
   final int grade;
   final String subject;
   final String lesson;
   final bool forceNew;
+  final int? childId;
 
   StartSessionRequest({
     required this.studentId,
     required this.studentName,
+    required this.childName,
+    required this.appLanguage,
     required this.grade,
     required this.subject,
     required this.lesson,
     this.forceNew = false,
+    this.childId,
   });
 
-  Map<String, dynamic> toJson() => {
-    'student_id': studentId,
-    'student_name': studentName,
-    'grade': grade,
-    'subject': subject,
-    'lesson': lesson,
-    'force_new': forceNew,
-  };
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{
+      'student_id': studentId,
+      'student_name': studentName,
+      'child_name': childName,
+      'app_language': appLanguage,
+      'grade': grade,
+      'subject': subject,
+      'lesson': lesson,
+      'force_new': forceNew,
+    };
+    if (childId != null) map['child_id'] = childId;
+    return map;
+  }
 }
 
 class ContinueRequest {
@@ -110,6 +122,7 @@ class LearnoResponse {
   final String? imageReference;
   final String? generatedImageUrl;
   final int? imagePosition;
+  final String lessonLanguage;
 
   LearnoResponse({
     required this.text,
@@ -118,6 +131,7 @@ class LearnoResponse {
     this.imageReference,
     this.generatedImageUrl,
     this.imagePosition,
+    this.lessonLanguage = 'en',
   });
 
   factory LearnoResponse.fromJson(Map<String, dynamic> json) {
@@ -133,6 +147,7 @@ class LearnoResponse {
       imageReference: json['image_reference'] as String?,
       generatedImageUrl: json['generated_image_url'] as String?,
       imagePosition: json['image_position'] as int?,
+      lessonLanguage: json['lesson_language'] as String? ?? 'en',
     );
   }
 
@@ -362,12 +377,14 @@ class SilenceResponse {
   final String message;
   final LearnoResponse? learnoResponse;
   final ProgressData? progress;
+  final bool isComplete;
 
   SilenceResponse({
     required this.status,
     required this.message,
     this.learnoResponse,
     this.progress,
+    this.isComplete = false,
   });
 
   factory SilenceResponse.fromJson(Map<String, dynamic> json) {
@@ -381,6 +398,7 @@ class SilenceResponse {
       progress: data['progress'] != null
           ? ProgressData.fromJson(data['progress'])
           : null,
+      isComplete: data['is_complete'] as bool? ?? false,
     );
   }
 

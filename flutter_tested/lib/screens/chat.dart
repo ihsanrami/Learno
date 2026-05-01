@@ -71,7 +71,13 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _initServices() async {
+    // Set app language before session start so the backend knows it
+    final locale = Localizations.localeOf(context);
+    SessionState.appLanguage = locale.languageCode == 'ar' ? 'ar' : 'en';
+
     await _tts.init();
+    // Initial TTS/STT language based on subject (will be refined after session start
+    // when we receive lesson_language from the backend)
     final subject = SessionState.subject?.name ?? '';
     await _tts.setSubjectLanguage(subject);
     _stt.setSubjectLocale(subject);
@@ -109,6 +115,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       final response = await ApiService.startSession();
+
+      // Apply lesson language from backend — handles math/science + Arabic app correctly
+      final lang = response.learnoResponse.lessonLanguage;
+      SessionState.lessonLanguage = lang;
+      await _tts.setLanguage(lang);
+      _stt.setLocale(lang);
 
       if (response.progress != null) {
         _progress = response.progress;
@@ -356,6 +368,16 @@ class _ChatScreenState extends State<ChatScreen> {
       }
 
       setState(() => _isLoading = false);
+
+      if (response.isComplete) {
+        _enqueueResponse(hint);
+        _scrollToBottom();
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted) _handleLessonComplete();
+        });
+        return;
+      }
+
       _enqueueResponse(hint);
       _scrollToBottom();
 
@@ -367,9 +389,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   bool _isQuestionType(String responseType) {
-    // Every AI message requires the child to respond.
-    // The silence timer and STT are activated after all response types.
-    return true;
+    // Every AI message waits for the child — silence timer + STT always active.
+    // session_ended means the child declined; noop means no action needed.
+    return responseType != 'noop';
   }
 
   void _handleLessonComplete() {

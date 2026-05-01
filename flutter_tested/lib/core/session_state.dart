@@ -12,6 +12,10 @@ class SessionState {
   static Subject? subject;
   static String? lesson;
 
+  static String childName = 'friend';
+  static String lessonLanguage = 'en';  // "ar" or "en" — from backend response
+  static String appLanguage = 'en';     // "ar" or "en" — from device locale
+
   static bool isLessonComplete = false;
   static int currentConcept = 1;
   static int totalConcepts = 5;
@@ -38,6 +42,8 @@ class SessionState {
     grade = null;
     subject = null;
     lesson = null;
+    childName = 'friend';
+    lessonLanguage = 'en';
 
     isLessonComplete = false;
     currentConcept = 1;
