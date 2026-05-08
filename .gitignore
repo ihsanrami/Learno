@@ -5,6 +5,8 @@ build/
 .flutter-plugins
 .flutter-plugins-dependencies
 .metadata
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
 
 # Android
 **/.gradle/
@@ -14,10 +16,14 @@ build/
 venv/
 __pycache__/
 *.pyc
+.pytest_cache/
 .env
 
+# Logs
+*.log
+
 # AI-generated images (served via proxy, not committed)
-static/generated_images/
+**/static/generated_images/
 
 # SQLite databases
 *.db

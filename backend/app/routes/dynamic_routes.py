@@ -1,12 +1,4 @@
-"""
-=============================================================================
-Routes for Dynamic Lesson System - FIXED VERSION
-=============================================================================
-✅ Fixed: Added student_id, student_name support
-✅ Fixed: Added force_new parameter
-✅ Fixed: Input sanitization
-=============================================================================
-"""
+"""Lesson session and curriculum API routes."""
 
 import logging
 import re

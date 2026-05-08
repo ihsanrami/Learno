@@ -1,15 +1,4 @@
-"""
-=============================================================================
-Main Application Entry Point for Learno Educational Backend
-=============================================================================
-UPDATED VERSION - Uses Dynamic Lesson System
-
-Changes:
-- Uses DynamicLessonService for comprehensive teaching
-- New /lesson/continue endpoint for teaching flow
-- Full chapter coverage with concept-based teaching
-=============================================================================
-"""
+"""Learno Educational Backend — FastAPI application entry point."""
 
 import logging
 import os
