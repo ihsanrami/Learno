@@ -17,10 +17,6 @@ from app.utils.exceptions import InvalidInputError
 logger = logging.getLogger(__name__)
 
 
-# =============================================================================
-# REQUEST MODELS (FIXED)
-# =============================================================================
-
 class StartSessionRequest(BaseModel):
     """Start session request — conversational lesson."""
     student_id: str = "default"
@@ -106,10 +102,6 @@ class EndSessionRequest(BaseModel):
     session_id: str
 
 
-# =============================================================================
-# RESPONSE MODELS
-# =============================================================================
-
 class MessageChunkData(BaseModel):
     """One display-ready message segment with its pre-display delay."""
     text: str
@@ -179,10 +171,6 @@ class EndSessionResponse(BaseModel):
     data: EndSessionResponseData
 
 
-# =============================================================================
-# SESSION ROUTER
-# =============================================================================
-
 session_router = APIRouter(prefix="/session", tags=["Session Management"])
 
 
@@ -249,10 +237,6 @@ async def end_session(request: Request, body: EndSessionRequest):
         )
     )
 
-
-# =============================================================================
-# LESSON ROUTER
-# =============================================================================
 
 lesson_router = APIRouter(prefix="/lesson", tags=["Lesson Interaction"])
 
@@ -347,10 +331,6 @@ async def handle_silence(request: Request, body: SilenceNotificationRequest):
         )
     )
 
-
-# =============================================================================
-# CURRICULUM ROUTER
-# =============================================================================
 
 curriculum_router = APIRouter(prefix="/curriculum", tags=["Curriculum"])
 

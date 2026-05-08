@@ -34,5 +34,10 @@ __pycache__/
 .idea/
 .vscode/
 
+# OS artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
 # Claude Code
 .claude/

@@ -1,12 +1,4 @@
-"""
-=============================================================================
-Message Splitter for Learno Educational Backend
-=============================================================================
-Splits AI-generated text into short, child-friendly message chunks with
-natural pacing delays. Designed for children aged 4-10: short segments,
-gentle timing, emoji-aware splitting, abbreviation-safe sentence detection.
-=============================================================================
-"""
+"""Splits AI responses into timed, child-friendly message chunks with natural pacing delays."""
 
 import re
 from dataclasses import dataclass
@@ -256,10 +248,6 @@ class MessageSplitter:
                 return True
         return False
 
-
-# =============================================================================
-# Module-level singleton
-# =============================================================================
 
 _splitter: Optional[MessageSplitter] = None
 

@@ -1,248 +1,107 @@
-# Learno — AI-Powered Educational App for Kids
+# Learno
 
-> An interactive bilingual (English/Arabic) tutoring companion that uses AI, voice, and adaptive lessons to make learning fun for children aged 5–12.
-
----
-
-## Features
-
-- **AI Tutor** — Conversational lessons powered by GPT-4o
-- **Voice Interaction** — Children speak; Learno listens and responds via TTS
-- **Bilingual** — Full English/Arabic support with RTL layout
-- **Adaptive Curriculum** — Dynamic lesson progression per child
-- **Parent Dashboard** — Analytics, goal tracking, and achievement badges
-- **Image Generation** — AI-generated visuals to reinforce concepts
-- **Secure Auth** — JWT-based accounts with parent and child profiles
-
----
+AI-powered educational app for children (K–Grade 4). A fox mascot named Learno teaches Math, Science, English, and Arabic through voice-first conversational lessons. Backend is FastAPI + GPT-4o; frontend is Flutter (Android).
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Mobile | Flutter 3.x (Dart) |
-| Backend | FastAPI (Python 3.11) |
-| AI | OpenAI GPT-4o |
-| Database | SQLite (dev) / PostgreSQL (prod) |
-| Auth | JWT + bcrypt |
-| TTS/STT | flutter_tts + speech_to_text |
-| CI/CD | GitHub Actions |
+- **Backend:** Python 3.11, FastAPI, SQLAlchemy, OpenAI GPT-4o / DALL-E 3
+- **Frontend:** Flutter 3.x, Dart — Android target
+- **Auth:** JWT (parent accounts) + local child profiles
+- **Localization:** English + Arabic (flutter_localizations)
 
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────┐
-│              Flutter App (Mobile)            │
-│  ┌──────────┐  ┌──────────┐  ┌───────────┐  │
-│  │  Child   │  │  Parent  │  │  Auth     │  │
-│  │  Lesson  │  │Dashboard │  │  Screens  │  │
-│  └────┬─────┘  └────┬─────┘  └─────┬─────┘  │
-└───────┼──────────────┼──────────────┼────────┘
-        │  HTTP/REST   │              │
-┌───────┼──────────────┼──────────────┼────────┐
-│       ▼    FastAPI Backend          ▼        │
-│  ┌──────────┐  ┌──────────┐  ┌───────────┐  │
-│  │ Lesson   │  │ Children │  │   Auth    │  │
-│  │ Routes   │  │  Routes  │  │  Routes   │  │
-│  └────┬─────┘  └────┬─────┘  └─────┬─────┘  │
-│       └─────────────┼───────────────┘        │
-│                ┌────▼─────┐                  │
-│                │ SQLAlchemy│                  │
-│                │    ORM   │                  │
-│                └────┬─────┘                  │
-│           ┌─────────┼────────┐               │
-│      ┌────▼───┐  ┌──▼───┐ ┌──▼──────┐       │
-│      │SQLite  │  │OpenAI│ │ Static  │       │
-│      │  DB    │  │ API  │ │ Images  │       │
-│      └────────┘  └──────┘ └─────────┘       │
-└─────────────────────────────────────────────┘
-```
-
----
-
-## Local Development Setup
-
-### Prerequisites
+## Prerequisites
 
 - Python 3.11+
-- Flutter SDK (stable channel)
-- Java 17+ (for Android builds)
+- Flutter 3.x (`flutter doctor` should pass)
 - OpenAI API key
+- Android SDK (for APK builds)
 
-### Backend Setup
+## Backend Setup
 
 ```bash
 cd backend
-
-# Create virtual environment
 python -m venv venv
-source venv/bin/activate          # Linux/Mac
-venv\Scripts\activate             # Windows
-
-# Install dependencies
-pip install -r requirements.txt -r requirements-dev.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env — set OPENAI_API_KEY and JWT_SECRET_KEY at minimum
-
-# Run development server
-uvicorn app.main:app --reload --port 8000
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env            # fill in OPENAI_API_KEY and JWT_SECRET_KEY
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-The API will be available at `http://localhost:8000`.
-Interactive docs: `http://localhost:8000/docs`
+API docs available at `http://localhost:8000/docs`.
 
-### Flutter Setup
+## Frontend Setup
 
 ```bash
 cd frontend
-
-# Install dependencies
 flutter pub get
-
-# Generate localizations
 flutter gen-l10n
-
-# Run on connected device / emulator
-flutter run
+flutter run                     # hot reload on connected device/emulator
 ```
 
-> By default the app points to `http://10.0.2.2:8000` (Android emulator → host).
-> For a physical device, update the base URL in `lib/config/app_config.dart`.
+To build a release APK:
 
-### Required Environment Variables
+```bash
+flutter build apk --release \
+  --dart-define=API_BASE_URL=http://<your-backend-ip>:8000/api/v1
+```
+
+## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENAI_API_KEY` | Yes | OpenAI API key |
-| `JWT_SECRET_KEY` | Yes | Random secret (min 32 chars) |
-| `DATABASE_URL` | No | SQLite default; set PostgreSQL URL for prod |
-| `OPENAI_MODEL` | No | Default: `gpt-4o` |
-| `DEBUG` | No | Default: `true` (set `false` in production) |
-| `ALLOWED_ORIGINS` | No | CORS origins (default `*`) |
+| `OPENAI_API_KEY` | Yes | GPT-4o + DALL-E 3 key |
+| `JWT_SECRET_KEY` | Yes | Secret for signing JWT tokens |
+| `DEBUG` | No | Set `true` for dev logging (default: `false`) |
+| `ALLOWED_ORIGINS` | No | CORS origins, comma-separated (default: `*`) |
 
----
+## App Icon
 
-## Running Tests
+Icon source is `frontend/assets/images/app_icon.png`. To regenerate Android icons after changing the source:
 
-```bash
-cd backend
-
-# Run all tests
-pytest tests/ -v
-
-# With coverage report
-pytest tests/ --cov=app --cov-report=term-missing
-
-# Quick summary only
-pytest tests/ -q
-```
-
-Expected: **524+ tests passing**.
-
----
-
-## Building for Production
-
-### Backend (Docker)
-
-```bash
-cd backend
-
-# Build image
-docker build -t learno-backend .
-
-# Run locally with Docker Compose
-docker compose up
-```
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for cloud deployment steps.
-
-### Flutter APK
-
-**Windows:**
-```batch
-cd frontend
-build_release.bat
-```
-
-**Linux / Mac:**
 ```bash
 cd frontend
-bash build_release.sh
+flutter pub run flutter_launcher_icons:main
 ```
-
-Output files:
-- `build/app/outputs/flutter-apk/app-release.apk` — direct distribution
-- `build/app/outputs/bundle/release/app-release.aab` — Google Play upload
-
----
-
-## Deployment Guide
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for full deployment instructions including:
-- Railway / Render backend deployment
-- APK distribution
-- Google Play Store submission
-- App Store submission
-
----
 
 ## Project Structure
 
 ```
 Learno/
-├── backend/          # FastAPI backend
+├── .github/workflows/build-apk.yml
+├── backend/
 │   ├── app/
-│   │   ├── config.py       # Settings (pydantic-settings)
-│   │   ├── database/       # SQLAlchemy models & session
-│   │   ├── models/         # ORM models
-│   │   ├── routes/         # API route handlers
-│   │   ├── services/       # Business logic (AI, lessons, TTS)
-│   │   └── main.py         # FastAPI app entry point
-│   ├── tests/              # pytest test suite (524+ tests)
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   ├── requirements.txt
-│   └── .env.example
-├── frontend/         # Flutter mobile app
-│   ├── lib/
-│   │   ├── l10n/           # Localization (en/ar)
-│   │   ├── screens/        # UI screens
-│   │   ├── services/       # API + audio services
-│   │   └── main.dart
-│   ├── android/
-│   ├── build_release.bat   # Windows build script
-│   ├── build_release.sh    # Linux/Mac build script
-│   └── pubspec.yaml
-├── .github/
-│   └── workflows/
-│       ├── tests.yml       # Backend CI (runs on every push)
-│       └── build-apk.yml   # Flutter APK build
-├── README.md
-├── DEPLOYMENT.md
-└── PRIVACY_POLICY.md
+│   │   ├── ai/          # GPT-4o prompts + chapter generator
+│   │   ├── auth/        # JWT auth, parent accounts
+│   │   ├── database/    # SQLAlchemy session + base
+│   │   ├── models/      # curriculum data + lesson content
+│   │   ├── routes/      # API endpoints
+│   │   ├── services/    # lesson, image, message-splitting logic
+│   │   ├── utils/       # exceptions
+│   │   └── main.py
+│   ├── .env.example
+│   └── requirements.txt
+└── frontend/
+    ├── assets/
+    │   ├── fonts/       # Recoleta + ThmanyahSans
+    │   └── images/      # fox mascot, backgrounds, grade cards
+    ├── lib/
+    │   ├── api/         # HTTP client + DTOs
+    │   ├── controllers/ # auth + locale state
+    │   ├── l10n/        # EN + AR strings
+    │   ├── models/      # message queue
+    │   ├── screens/     # chat, grades, topics, auth, parent dashboard
+    │   └── services/    # TTS, STT, auth, storage
+    ├── android/
+    ├── flutter_launcher_icons.yaml
+    ├── l10n.yaml
+    └── pubspec.yaml
 ```
 
----
+## Notes
 
-## Contributors
-
-| Name | Role |
-|------|------|
-| Ahmad Aljanaideh | Project Lead / Backend |
-| Ihsan | Mobile Development |
-| Abdalrahman | AI Integration |
-| Mohammad | UI/UX Design |
-| Abeer | Testing & QA |
-
-**Supervisor:** Dr. Khaldoon T. Alzoubi
-
----
-
-## License
-
-This project is submitted as an academic capstone project. All rights reserved by the contributors.
+- Backend uses SQLite by default (`learno.db`, gitignored). Set `DATABASE_URL` env var for production.
+- AI-generated images are proxied to `/static/generated_images/` — not committed to git.
+- TTS uses `flutter_tts`; STT uses `speech_to_text`. Both require microphone permission on Android.
+- Arabic lessons use RTL layout and ThmanyahSans font automatically.
+- Parent dashboard tracks child progress per `child_id`.
+- `API_BASE_URL` dart-define must point to the running backend for the app to function.

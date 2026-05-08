@@ -843,10 +843,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-// =============================================================================
-// TYPING INDICATOR
-// =============================================================================
-
 class _TypingIndicator extends StatefulWidget {
   const _TypingIndicator();
 
@@ -937,10 +933,6 @@ class _Dot extends StatelessWidget {
     );
   }
 }
-
-// =============================================================================
-// UI MESSAGE MODEL
-// =============================================================================
 
 class _ChatMessageUI {
   static int _counter = 0;

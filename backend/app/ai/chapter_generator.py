@@ -1,11 +1,4 @@
-"""
-=============================================================================
-Dynamic Chapter Generator for Learno Educational Backend
-=============================================================================
-Generates ChapterContent from (grade, subject, topic) via GPT-4.
-Results are cached in-memory with key (grade, subject, topic_id).
-=============================================================================
-"""
+"""Generates ChapterContent from (grade, subject, topic) via GPT-4, cached in-memory."""
 
 import json
 import logging
@@ -41,10 +34,6 @@ def get_cache_stats() -> dict:
         "hit_rate_pct": round(_cache_hits / total * 100, 1) if total > 0 else 0.0,
     }
 
-
-# =============================================================================
-# PUBLIC API
-# =============================================================================
 
 def generate_chapter(
     grade: int,
@@ -99,10 +88,6 @@ def clear_cache() -> None:
     _cache_hits = 0
     _cache_misses = 0
 
-
-# =============================================================================
-# PRIVATE HELPERS
-# =============================================================================
 
 def _parse_chapter_json(
     raw_json: str,

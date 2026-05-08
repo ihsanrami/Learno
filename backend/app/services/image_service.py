@@ -1,17 +1,4 @@
-"""
-=============================================================================
-Image Generation Service for Learno Educational Backend
-=============================================================================
-Handles AI image generation using OpenAI DALL-E API.
-
-Features:
-- Generate educational images from text descriptions
-- Extract [GENERATE_IMAGE: ...] markers from AI responses
-- Child-friendly, cartoon style images
-- Caching to avoid regenerating same images
-
-=============================================================================
-"""
+"""DALL-E image generation service — extracts [GENERATE_IMAGE:...] markers and returns proxied URLs."""
 
 import logging
 import re
@@ -29,15 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 class ImageGenerationService:
-    """
-    Service for generating educational images using DALL-E.
-    """
     
     # Cache size limit to prevent memory leak
     MAX_CACHE_SIZE = 100
     
     def __init__(self):
-        """Initialize the image generation service."""
         openai.api_key = settings.OPENAI_API_KEY
         
         # Image settings
@@ -57,17 +40,7 @@ class ImageGenerationService:
         logger.info("ImageGenerationService initialized with DALL-E")
     
     def extract_image_request(self, response_text: str) -> Optional[str]:
-        """
-        Extract image generation request from AI response.
-        
-        Looks for pattern: [GENERATE_IMAGE: description here]
-        
-        Args:
-            response_text: The AI's response text
-            
-        Returns:
-            Image description if found, None otherwise
-        """
+        """Return the image description from a [GENERATE_IMAGE: ...] marker, or None."""
         pattern = r'\[GENERATE_IMAGE:\s*([^\]]+)\]'
         match = re.search(pattern, response_text, re.IGNORECASE)
         
@@ -79,17 +52,7 @@ class ImageGenerationService:
         return None
     
     def remove_image_marker(self, response_text: str) -> str:
-        """
-        Remove [GENERATE_IMAGE: ...] marker from response text.
-        
-        Used to clean text before TTS (don't speak the marker).
-        
-        Args:
-            response_text: The AI's response text
-            
-        Returns:
-            Cleaned text without the marker
-        """
+        """Strip the [GENERATE_IMAGE: ...] marker so it isn't spoken by TTS."""
         pattern = r'\[GENERATE_IMAGE:\s*[^\]]+\]'
         cleaned = re.sub(pattern, '', response_text, flags=re.IGNORECASE)
         return cleaned.strip()
@@ -99,11 +62,6 @@ class ImageGenerationService:
         return hashlib.md5(description.lower().encode()).hexdigest()
     
     def _build_dalle_prompt(self, description: str) -> str:
-        """
-        Build an optimized prompt for DALL-E.
-        
-        Adds child-friendly styling requirements.
-        """
         base_style = (
             "Create a simple, colorful, child-friendly cartoon illustration. "
             "Style: Bright colors, clean lines, friendly appearance, "
@@ -114,17 +72,7 @@ class ImageGenerationService:
         return f"{base_style}Content: {description}"
     
     async def generate_image(self, description: str) -> Tuple[Optional[str], Optional[str]]:
-        """
-        Generate an educational image using DALL-E.
-        
-        Args:
-            description: What the image should show
-            
-        Returns:
-            Tuple of (image_url, error_message)
-            - If successful: (url, None)
-            - If failed: (None, error_message)
-        """
+        """Generate via DALL-E; returns (url, None) on success or (None, error) on failure."""
         # Check cache first
         cache_key = self._get_cache_key(description)
         if cache_key in self._cache:
@@ -179,11 +127,6 @@ class ImageGenerationService:
             return None, error_msg
     
     def generate_image_sync(self, description: str) -> Tuple[Optional[str], Optional[str]]:
-        """
-        Synchronous version of generate_image.
-        
-        For use in non-async contexts.
-        """
         # Check cache first
         cache_key = self._get_cache_key(description)
         if cache_key in self._cache:
@@ -230,13 +173,6 @@ class ImageGenerationService:
             return None, error_msg
     
     def get_placeholder_image(self, description: str) -> str:
-        """
-        Get a placeholder image URL when generation fails.
-        
-        Returns a simple placeholder or cached fallback.
-        """
-        # You could return a static placeholder URL here
-        # For now, return a data URI with a simple placeholder
         return "https://via.placeholder.com/400x400.png?text=Image+Loading..."
     
     def clear_cache(self):
@@ -245,28 +181,10 @@ class ImageGenerationService:
         logger.info("Image cache cleared")
 
 
-# =============================================================================
-# Response Parser Integration
-# =============================================================================
-
 def process_ai_response_with_images(
     response_text: str,
     image_service: ImageGenerationService
 ) -> dict:
-    """
-    Process AI response and handle image generation.
-    
-    Args:
-        response_text: The AI's raw response
-        image_service: ImageGenerationService instance
-        
-    Returns:
-        Dictionary with:
-        - text: Cleaned response text (for TTS)
-        - has_image: Whether an image was requested
-        - image_url: Generated image URL (if any)
-        - image_error: Error message (if generation failed)
-    """
     result = {
         "text": response_text,
         "has_image": False,
@@ -294,10 +212,6 @@ def process_ai_response_with_images(
     
     return result
 
-
-# =============================================================================
-# Singleton
-# =============================================================================
 
 _image_service: Optional[ImageGenerationService] = None
 

@@ -38,10 +38,6 @@ class TopicInfo:
     order: int
 
 
-# =============================================================================
-# COMPLETE CURRICULUM: (GradeLevel, SubjectType) -> [TopicInfo, ...]
-# =============================================================================
-
 CURRICULUM: Dict[Tuple[GradeLevel, SubjectType], List[TopicInfo]] = {
 
     # ─────────────────────────── KINDERGARTEN ────────────────────────────────
@@ -216,10 +212,6 @@ CURRICULUM: Dict[Tuple[GradeLevel, SubjectType], List[TopicInfo]] = {
 }
 
 
-# =============================================================================
-# CONSTANTS
-# =============================================================================
-
 GRADE_DISPLAY_NAMES = {
     0: "Kindergarten",
     1: "First Grade",
@@ -236,10 +228,6 @@ GRADE_AGE_RANGES = {
     4: "8-9",
 }
 
-
-# =============================================================================
-# HELPER FUNCTIONS
-# =============================================================================
 
 def grade_int_to_enum(grade: int) -> Optional[GradeLevel]:
     for g in GradeLevel:

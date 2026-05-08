@@ -34,10 +34,6 @@ logger = logging.getLogger(__name__)
 
 _start_time = time.time()
 
-# =============================================================================
-# Create FastAPI Application
-# =============================================================================
-
 from app.rate_limiter import limiter
 
 
@@ -82,18 +78,11 @@ async def log_slow_requests(request: Request, call_next):
     return response
 
 
-# =============================================================================
-# Static Files (proxied AI-generated images)
-# =============================================================================
-
 os.makedirs("static/generated_images", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# =============================================================================
-# CORS Middleware
-# =============================================================================
-
 _origins = settings.ALLOWED_ORIGINS
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
@@ -104,10 +93,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# =============================================================================
-# Register Routers
-# =============================================================================
-
 API_PREFIX = f"/api/{settings.API_VERSION}"
 
 app.include_router(session_router, prefix=API_PREFIX)
@@ -117,10 +102,6 @@ app.include_router(auth_router, prefix=API_PREFIX)
 app.include_router(children_router, prefix=API_PREFIX)
 app.include_router(parent_router, prefix=API_PREFIX)
 
-
-# =============================================================================
-# Exception Handlers
-# =============================================================================
 
 @app.exception_handler(SessionNotFoundError)
 async def session_not_found_handler(request: Request, exc: SessionNotFoundError):
@@ -182,10 +163,6 @@ async def ai_service_error_handler(request: Request, exc: AIServiceError):
     )
 
 
-# =============================================================================
-# Root Endpoints
-# =============================================================================
-
 @app.get("/")
 async def root():
     return {
@@ -235,10 +212,6 @@ async def api_health_check():
         },
     }
 
-
-# =============================================================================
-# Teaching Flow Documentation
-# =============================================================================
 
 @app.get("/teaching-flow")
 async def teaching_flow_info():

@@ -1,15 +1,4 @@
-"""
-Conversational Lesson Service for Learno Educational Backend
-============================================================
-True AI-driven conversational tutoring.
-
-Architecture:
-- Each turn: full conversation history → GPT-4o → contextual response
-- No rigid phase state machine
-- No pre-generated scripts served verbatim
-- Child's specific words analyzed and referenced by AI
-- Chapter generator used ONLY for lightweight topic guide (what to cover)
-"""
+"""AI-driven conversational tutoring service — full history sent to GPT-4o each turn."""
 
 import logging
 from dataclasses import dataclass, field

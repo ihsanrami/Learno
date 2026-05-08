@@ -1,31 +1,4 @@
-"""
-=============================================================================
-Lesson Content System for Learno Educational Backend
-=============================================================================
-COMPREHENSIVE VERSION - Full Chapter Coverage with Dynamic Teaching
-
-Philosophy:
-- Each chapter is divided into CONCEPTS (not just questions)
-- Each concept has: Explanation → Examples → Practice → Verification
-- AI teaches like a real teacher: explain first, then test
-- Lesson doesn't end until ALL concepts are mastered
-- Adaptive: more practice if struggling, faster if doing well
-
-Structure:
-Chapter
-├── Concept 1
-│   ├── Introduction (what we'll learn)
-│   ├── Explanation (teach the concept)
-│   ├── Visual Example (with image)
-│   ├── Guided Practice (together)
-│   ├── Independent Practice (child alone)
-│   └── Concept Check (verify understanding)
-├── Concept 2
-│   └── ...
-└── Chapter Summary & Celebration
-
-=============================================================================
-"""
+"""Chapter and concept content models for the Learno lesson system."""
 
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
@@ -143,10 +116,6 @@ class ChapterContent:
         return None
 
 
-# =============================================================================
-# COUNTING CHAPTER - COMPREHENSIVE CONTENT
-# =============================================================================
-
 def get_counting_chapter() -> ChapterContent:
     """
     Complete counting chapter for Grade 2.
@@ -170,9 +139,6 @@ def get_counting_chapter() -> ChapterContent:
         grade_level=2,
         subject="Math",
         
-        # =====================================================================
-        # WELCOME
-        # =====================================================================
         welcome_script="""
 Hello, little friend! 😊🎧 I'm Learno, your learning buddy!
 
@@ -201,9 +167,6 @@ Here's what we'll learn today:
 Ready? Let's go! 🌟
         """.strip(),
         
-        # =====================================================================
-        # CONCEPTS
-        # =====================================================================
         concepts=[
             # -----------------------------------------------------------------
             # CONCEPT 1: Number Recognition (1-5)
@@ -948,9 +911,6 @@ Now we have 3 apples TOTAL!
             ),
         ],
         
-        # =====================================================================
-        # CHAPTER REVIEW
-        # =====================================================================
         review_questions=[
             PracticeQuestion(
                 question_text="Review time! What number is this: 7 🔢",
@@ -982,9 +942,6 @@ Now we have 3 apples TOTAL!
             ),
         ],
         
-        # =====================================================================
-        # COMPLETION
-        # =====================================================================
         completion_script="""
 🎉🎊🥳 WOW WOW WOW! 🥳🎊🎉
 
@@ -1011,10 +968,6 @@ Bye bye, my little math genius! 👋😊❤️
         certificate_text="🏆 CERTIFICATE OF ACHIEVEMENT 🏆\nCompleted: Counting Fun Adventure\nYou are a Math Superstar! ⭐"
     )
 
-
-# =============================================================================
-# CHAPTER REGISTRY
-# =============================================================================
 
 AVAILABLE_CHAPTERS = {
     "counting": get_counting_chapter,

@@ -2,10 +2,6 @@ from typing import List, Dict, Optional
 from app.models.lesson_content import PracticeQuestion
 
 
-# =============================================================================
-# GRADE-AWARE SYSTEM PROMPTS
-# =============================================================================
-
 _GRADE_SYSTEM_PROMPTS: Dict[int, str] = {
     0: (
         "You are Learno 🦊, a warm and patient fox teacher for children aged 4-5 (Kindergarten).\n\n"
@@ -138,10 +134,6 @@ def get_system_prompt_for_grade(grade: int, subject: str = "") -> str:
     return prompt
 
 
-# =============================================================================
-# CHAPTER GENERATION PROMPT  (used by chapter_generator.py)
-# =============================================================================
-
 def build_chapter_generation_prompt(
     grade: int,
     subject: str,
@@ -237,10 +229,6 @@ REQUIREMENTS:
     ]
 
 
-# =============================================================================
-# SYSTEM PROMPT  (original — kept for static Grade 2 Math path)
-# =============================================================================
-
 LEARNO_TEACHER_PROMPT = """You are Learno 🦊, a warm and patient fox teacher for children aged 6-7.
 
 ABSOLUTE RULES — FOLLOW EVERY SINGLE TIME, NO EXCEPTIONS:
@@ -267,10 +255,6 @@ IMAGE: When you need a visual, use: [GENERATE_IMAGE: description]
 Example: [GENERATE_IMAGE: 3 red apples in a row, cartoon style]
 """
 
-
-# =============================================================================
-# WELCOME PROMPTS
-# =============================================================================
 
 def build_welcome_prompt(
     chapter_title: str,
@@ -310,10 +294,6 @@ RULES:
         {"role": "user", "content": user_prompt}
     ]
 
-
-# =============================================================================
-# CONCEPT TEACHING PROMPTS
-# =============================================================================
 
 def build_concept_introduction_prompt(
     concept_name: str,
@@ -452,10 +432,6 @@ RULES:
     ]
 
 
-# =============================================================================
-# PRACTICE PROMPTS
-# =============================================================================
-
 def build_guided_practice_prompt(
     question: PracticeQuestion,
     concept_name: str,
@@ -592,10 +568,6 @@ RULES:
     ]
 
 
-# =============================================================================
-# REVIEW AND CELEBRATION
-# =============================================================================
-
 def build_chapter_review_prompt(
     question: PracticeQuestion,
     question_number: int,
@@ -682,10 +654,6 @@ RULES:
         {"role": "user", "content": user_prompt}
     ]
 
-
-# =============================================================================
-# FEEDBACK PROMPTS
-# =============================================================================
 
 def build_encouragement_prompt(
     is_correct: bool,
