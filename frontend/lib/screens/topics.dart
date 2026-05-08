@@ -131,25 +131,17 @@ class _TopicsScreenState extends State<TopicsScreen> {
                 if (!_isLoading && _errorMessage == null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 20),
-                    child: ElevatedButton(
-                      onPressed: _selectedIndex == null ? null : _startLesson,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF8D00),
-                        foregroundColor: const Color(0xFF44200B),
-                        disabledBackgroundColor:
-                            const Color(0xFFFF8D00).withOpacity(0.4),
-                        elevation: 4,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 48, vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30)),
-                        textStyle: const TextStyle(
-                          fontFamily: 'Recoleta',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 22,
+                    child: GestureDetector(
+                      onTap: _selectedIndex == null ? null : _startLesson,
+                      child: Opacity(
+                        opacity: _selectedIndex == null ? 0.4 : 1.0,
+                        child: Image.asset(
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'assets/images/continue_ar.png'
+                              : 'assets/images/continue.png',
+                          height: 60,
                         ),
                       ),
-                      child: Text(l10n.continueButton),
                     ),
                   ),
                 const SizedBox(height: 50),

@@ -1,9 +1,3 @@
-# =============================================================================
-# Learno Flutter App - pubspec.yaml
-# =============================================================================
-# ✅ FIXED: SDK version, removed missing assets
-# =============================================================================
-
 name: learno
 description: "Learno - AI-Powered Educational App for Kids"
 publish_to: 'none'
@@ -72,3 +66,9 @@ flutter:
           weight: 600
         - asset: assets/fonts/fonnts.com-recoletaalt-black.otf
           weight: 900
+    - family: ThmanyahSans
+      fonts:
+        - asset: assets/fonts/thmanyahsans-Black.otf
+          weight: 900
+        - asset: assets/fonts/thmanyahsans-Medium.otf
+          weight: 500

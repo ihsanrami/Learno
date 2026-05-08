@@ -41,7 +41,7 @@ Railway is the recommended platform for quick deployment with SQLite.
 
 ### Step 1: Prepare the Repository
 
-Ensure these files exist in `backend_fixed/`:
+Ensure these files exist in `backend/`:
 - `Dockerfile` ✅
 - `.env.example` ✅
 - `requirements.txt` ✅
@@ -56,7 +56,7 @@ Ensure these files exist in `backend_fixed/`:
 ### Step 3: Set the Root Directory
 
 In Railway project settings:
-- **Root Directory**: `backend_fixed`
+- **Root Directory**: `backend`
 
 ### Step 4: Configure Environment Variables
 
@@ -109,7 +109,7 @@ Alternative to Railway. Uses `render.yaml` for infrastructure-as-code.
 
 ### Step 1: Create a `render.yaml`
 
-Add this file to `backend_fixed/render.yaml`:
+Add this file to `backend/render.yaml`:
 
 ```yaml
 services:
@@ -137,7 +137,7 @@ services:
 
 1. Go to [render.com](https://render.com) → **New** → **Web Service**.
 2. Connect your GitHub repo.
-3. Set **Root Directory** to `backend_fixed`.
+3. Set **Root Directory** to `backend`.
 4. Render will use the `Dockerfile`.
 5. Set environment variables in the Render dashboard.
 
@@ -148,7 +148,7 @@ services:
 ### Option A: Local Build (Windows)
 
 ```batch
-cd flutter_tested
+cd frontend
 build_release.bat
 ```
 
@@ -157,13 +157,13 @@ Enter your Railway/Render backend URL when prompted.
 ### Option B: Local Build (Linux/Mac)
 
 ```bash
-cd flutter_tested
+cd frontend
 bash build_release.sh
 ```
 
 ### Option C: GitHub Actions (Automated)
 
-Every push to `main` that touches `flutter_tested/` automatically triggers a build.
+Every push to `main` that touches `frontend/` automatically triggers a build.
 
 1. Go to your GitHub repo → **Actions** → **Build APK**.
 2. Click **Run workflow** to trigger manually.
@@ -177,8 +177,8 @@ To set the production API URL in CI:
 ### APK Output Location
 
 ```
-flutter_tested/build/app/outputs/flutter-apk/app-release.apk     ← Share this
-flutter_tested/build/app/outputs/bundle/release/app-release.aab  ← Upload to Play Store
+frontend/build/app/outputs/flutter-apk/app-release.apk     ← Share this
+frontend/build/app/outputs/bundle/release/app-release.aab  ← Upload to Play Store
 ```
 
 ---
@@ -222,7 +222,7 @@ Store `learno-release.jks` securely — you need it for every future release.
 
 ### Step 3: Configure Signing in Flutter
 
-Create `flutter_tested/android/key.properties`:
+Create `frontend/android/key.properties`:
 ```
 storePassword=your-store-password
 keyPassword=your-key-password
@@ -230,7 +230,7 @@ keyAlias=learno
 storeFile=../learno-release.jks
 ```
 
-Update `flutter_tested/android/app/build.gradle.kts` to use the keystore.
+Update `frontend/android/app/build.gradle.kts` to use the keystore.
 
 > **Never commit `key.properties` or `learno-release.jks` to git.**
 
@@ -268,7 +268,7 @@ Required for apps that collect any user data. Use the template in [PRIVACY_POLIC
 ### Step 8: Build & Upload the AAB
 
 ```bash
-cd flutter_tested
+cd frontend
 flutter build appbundle --release --dart-define=API_BASE_URL=https://your-backend.railway.app
 ```
 
@@ -290,7 +290,7 @@ Google typically reviews within 1–3 business days for new apps.
 
 ### Steps
 
-1. Open `flutter_tested/ios/Runner.xcworkspace` in Xcode.
+1. Open `frontend/ios/Runner.xcworkspace` in Xcode.
 2. Set **Bundle Identifier** to `com.learno.app`.
 3. Select your Apple Developer team.
 4. **Product** → **Archive** to create an `.xcarchive`.

@@ -74,7 +74,7 @@
 ### Backend Setup
 
 ```bash
-cd backend_fixed
+cd backend
 
 # Create virtual environment
 python -m venv venv
@@ -98,7 +98,7 @@ Interactive docs: `http://localhost:8000/docs`
 ### Flutter Setup
 
 ```bash
-cd flutter_tested
+cd frontend
 
 # Install dependencies
 flutter pub get
@@ -129,7 +129,7 @@ flutter run
 ## Running Tests
 
 ```bash
-cd backend_fixed
+cd backend
 
 # Run all tests
 pytest tests/ -v
@@ -150,7 +150,7 @@ Expected: **524+ tests passing**.
 ### Backend (Docker)
 
 ```bash
-cd backend_fixed
+cd backend
 
 # Build image
 docker build -t learno-backend .
@@ -165,13 +165,13 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for cloud deployment steps.
 
 **Windows:**
 ```batch
-cd flutter_tested
+cd frontend
 build_release.bat
 ```
 
 **Linux / Mac:**
 ```bash
-cd flutter_tested
+cd frontend
 bash build_release.sh
 ```
 
@@ -195,7 +195,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for full deployment instructions including:
 
 ```
 Learno/
-├── backend_fixed/          # FastAPI backend
+├── backend/          # FastAPI backend
 │   ├── app/
 │   │   ├── config.py       # Settings (pydantic-settings)
 │   │   ├── database/       # SQLAlchemy models & session
@@ -208,7 +208,7 @@ Learno/
 │   ├── docker-compose.yml
 │   ├── requirements.txt
 │   └── .env.example
-├── flutter_tested/         # Flutter mobile app
+├── frontend/         # Flutter mobile app
 │   ├── lib/
 │   │   ├── l10n/           # Localization (en/ar)
 │   │   ├── screens/        # UI screens

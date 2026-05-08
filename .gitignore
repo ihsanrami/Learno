@@ -27,3 +27,6 @@ static/generated_images/
 # IDE
 .idea/
 .vscode/
+
+# Claude Code
+.claude/

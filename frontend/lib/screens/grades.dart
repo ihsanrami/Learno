@@ -41,31 +41,31 @@ class GradesScreen extends StatelessWidget {
                     children: [
                       _gradeButton(
                         context: context,
-                        image: 'assets/images/kindergarten.png',
+                        imageBase: 'kindergarten',
                         grade: Grade.kindergarten,
                       ),
                       const SizedBox(height: 20),
                       _gradeButton(
                         context: context,
-                        image: 'assets/images/first_grade.png',
+                        imageBase: 'first_grade',
                         grade: Grade.first,
                       ),
                       const SizedBox(height: 20),
                       _gradeButton(
                         context: context,
-                        image: 'assets/images/second_grade.png',
+                        imageBase: 'second_grade',
                         grade: Grade.second,
                       ),
                       const SizedBox(height: 20),
                       _gradeButton(
                         context: context,
-                        image: 'assets/images/third_grade.png',
+                        imageBase: 'third_grade',
                         grade: Grade.third,
                       ),
                       const SizedBox(height: 20),
                       _gradeButton(
                         context: context,
-                        image: 'assets/images/fourth_grade.png',
+                        imageBase: 'fourth_grade',
                         grade: Grade.fourth,
                       ),
                     ],
@@ -81,9 +81,13 @@ class GradesScreen extends StatelessWidget {
 
   Widget _gradeButton({
     required BuildContext context,
-    required String image,
+    required String imageBase,
     required Grade grade,
   }) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final imagePath = isArabic
+        ? 'assets/images/${imageBase}_ar.png'
+        : 'assets/images/$imageBase.png';
     return InkWell(
       onTap: () {
         SessionState.grade = grade;
@@ -94,7 +98,7 @@ class GradesScreen extends StatelessWidget {
           ),
         );
       },
-      child: Image.asset(image),
+      child: Image.asset(imagePath),
     );
   }
 }

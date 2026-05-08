@@ -78,7 +78,7 @@ class _LearnoAppState extends State<LearnoApp> {
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFFF8D00),
         ),
-        fontFamily: 'Roboto',
+        fontFamily: _localeCtrl.isArabic ? 'ThmanyahSans' : 'Recoleta',
       ),
       home: const SplashScreen(),
     );
