@@ -18,7 +18,7 @@ pydantic==2.5.3
 email-validator>=2.1.0
 
 # Image processing
-pillow==10.2.0
+Pillow==9.5.0
 
 # Database
 sqlalchemy>=2.0.0
