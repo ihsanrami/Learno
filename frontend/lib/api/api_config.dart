@@ -9,7 +9,7 @@
 class ApiConfig {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://learno-production-1f3b.up.railway.app/api/v1',
+    defaultValue: 'http://192.168.8.47:8000/api/v1',
   );
 
   static String get serverRoot {
