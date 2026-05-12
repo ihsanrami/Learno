@@ -3,13 +3,13 @@
 //
 // Examples:
 //   flutter run
-//   flutter run --dart-define=API_BASE_URL=http://192.168.8.47:8000/api/v1
+//   flutter run --dart-define=API_BASE_URL=http://192.168.8.79:8000/api/v1
 //   flutter build apk --dart-define=API_BASE_URL=https://api.learno.com/api/v1
 
 class ApiConfig {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.8.47:8000/api/v1',
+    defaultValue: 'http://192.168.8.79:8000/api/v1',
   );
 
   static String get serverRoot {
