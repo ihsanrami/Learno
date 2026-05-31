@@ -36,6 +36,16 @@ class Settings:
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    RESET_TOKEN_EXPIRE_MINUTES: int = 10
+    PASSWORD_RESET_CODE_EXPIRE_MINUTES: int = 15
+
+    # SMTP — leave empty to disable email (debug_code will still work when DEBUG=true)
+    # Example: smtp.gmail.com / 587 / your-app@gmail.com / Gmail App Password
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER: str = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_FROM: str = os.getenv("SMTP_FROM", "")
 
 
 settings = Settings()

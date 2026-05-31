@@ -278,5 +278,44 @@
   "levelLearning": "Learning",
   "levelGrowing": "Growing",
   "levelGreat": "Great!",
-  "levelStar": "Star!"
+  "levelStar": "Star!",
+
+  "okButton": "OK",
+  "dailyLimitTitle": "Daily Goal Reached! 🌟",
+  "dailyLimitMessage": "You've reached your learning goal for today! 🌟 Come back tomorrow to keep going.",
+  "gradeLockedTitle": "Grade Locked 🔒",
+  "gradeLockedMessage": "This grade isn't unlocked for you yet. Keep learning and you'll get there! 🌟",
+
+  "forgotPasswordLink": "Forgot Password?",
+  "forgotPasswordTitle": "Forgot Password?",
+  "forgotPasswordSubtitle": "Enter your email and we'll send you a reset code",
+  "sendCodeButton": "Send Code",
+  "resetCodeSentMessage": "If this email is registered, you'll receive a reset code.",
+  "checkEmailTitle": "Check Your Email",
+  "checkEmailSubtitle": "We sent a 6-digit code to {email}",
+  "@checkEmailSubtitle": {
+    "placeholders": {
+      "email": {"type": "String"}
+    }
+  },
+  "enterCodeHint": "Enter 6-digit code",
+  "verifyCodeButton": "Verify Code",
+  "resendCodeButton": "Resend Code",
+  "invalidResetCode": "Invalid or expired code. Please try again.",
+  "createNewPasswordTitle": "New Password",
+  "createNewPasswordSubtitle": "Choose a strong new password",
+  "newPasswordLabel": "New Password",
+  "confirmNewPasswordLabel": "Confirm New Password",
+  "resetPasswordButton": "Reset Password",
+  "passwordResetSuccessMessage": "Password reset successfully! Please log in.",
+  "demoCodeLabel": "Demo code: {code}",
+  "@demoCodeLabel": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+
+  "voiceModeLabel": "Voice",
+  "textModeLabel": "Text",
+  "preparingLessonLabel": "Preparing your lesson…"
 }

@@ -507,4 +507,91 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get levelStar => 'Star!';
+
+  @override
+  String get okButton => 'OK';
+
+  @override
+  String get dailyLimitTitle => 'Daily Goal Reached! 🌟';
+
+  @override
+  String get dailyLimitMessage =>
+      'You\'ve reached your learning goal for today! 🌟 Come back tomorrow to keep going.';
+
+  @override
+  String get gradeLockedTitle => 'Grade Locked 🔒';
+
+  @override
+  String get gradeLockedMessage =>
+      'This grade isn\'t unlocked for you yet. Keep learning and you\'ll get there! 🌟';
+
+  @override
+  String get forgotPasswordLink => 'Forgot Password?';
+
+  @override
+  String get forgotPasswordTitle => 'Forgot Password?';
+
+  @override
+  String get forgotPasswordSubtitle =>
+      'Enter your email and we\'ll send you a reset code';
+
+  @override
+  String get sendCodeButton => 'Send Code';
+
+  @override
+  String get resetCodeSentMessage =>
+      'If this email is registered, you\'ll receive a reset code.';
+
+  @override
+  String get checkEmailTitle => 'Check Your Email';
+
+  @override
+  String checkEmailSubtitle(String email) {
+    return 'We sent a 6-digit code to $email';
+  }
+
+  @override
+  String get enterCodeHint => 'Enter 6-digit code';
+
+  @override
+  String get verifyCodeButton => 'Verify Code';
+
+  @override
+  String get resendCodeButton => 'Resend Code';
+
+  @override
+  String get invalidResetCode => 'Invalid or expired code. Please try again.';
+
+  @override
+  String get createNewPasswordTitle => 'New Password';
+
+  @override
+  String get createNewPasswordSubtitle => 'Choose a strong new password';
+
+  @override
+  String get newPasswordLabel => 'New Password';
+
+  @override
+  String get confirmNewPasswordLabel => 'Confirm New Password';
+
+  @override
+  String get resetPasswordButton => 'Reset Password';
+
+  @override
+  String get passwordResetSuccessMessage =>
+      'Password reset successfully! Please log in.';
+
+  @override
+  String demoCodeLabel(String code) {
+    return 'Demo code: $code';
+  }
+
+  @override
+  String get voiceModeLabel => 'Voice';
+
+  @override
+  String get textModeLabel => 'Text';
+
+  @override
+  String get preparingLessonLabel => 'Preparing your lesson…';
 }

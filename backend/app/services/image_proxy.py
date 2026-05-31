@@ -4,6 +4,7 @@ Downloads DALL-E images immediately and serves them from our own permanent URLs,
 preventing display failures when DALL-E URLs expire after ~1 hour.
 """
 
+import base64
 import uuid
 import logging
 from pathlib import Path
@@ -62,6 +63,30 @@ async def download_and_cache_async(dalle_url: str) -> Optional[str]:
     except Exception as e:
         logger.error(f"Image proxy download failed: {e}")
         return None
+
+
+def save_b64_image_sync(b64_data: str) -> Optional[str]:
+    """
+    Decode a base64 PNG string and save it locally.
+
+    Returns /static/generated_images/<uuid>.png or None on failure.
+    gpt-image-1 returns b64_json instead of URLs, so this replaces the download step.
+    """
+    _ensure_dirs()
+    filename = f"{uuid.uuid4()}.png"
+    filepath = STATIC_DIR / filename
+    try:
+        filepath.write_bytes(base64.b64decode(b64_data))
+        logger.info(f"Saved b64 image: {filename}")
+        return f"/static/generated_images/{filename}"
+    except Exception as e:
+        logger.error(f"Failed to save b64 image: {e}")
+        return None
+
+
+async def save_b64_image_async(b64_data: str) -> Optional[str]:
+    """Async version of save_b64_image_sync."""
+    return save_b64_image_sync(b64_data)
 
 
 def cleanup_old_images(days: int = 7) -> None:

@@ -72,3 +72,9 @@ flutter:
           weight: 900
         - asset: assets/fonts/thmanyahsans-Medium.otf
           weight: 500
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansArabic-Regular.ttf
+          weight: 400

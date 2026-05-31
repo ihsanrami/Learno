@@ -278,5 +278,44 @@
   "levelLearning": "يتعلم",
   "levelGrowing": "ينمو",
   "levelGreat": "ممتاز!",
-  "levelStar": "نجم!"
+  "levelStar": "نجم!",
+
+  "okButton": "حسنًا",
+  "dailyLimitTitle": "تم بلوغ الهدف اليومي! 🌟",
+  "dailyLimitMessage": "لقد أتممت هدفك التعليمي لليوم! 🌟 عُد غدًا لمواصلة التعلم.",
+  "gradeLockedTitle": "المرحلة مقفلة 🔒",
+  "gradeLockedMessage": "هذه المرحلة غير متاحة لك بعد. واصل التعلم وستصل إليها! 🌟",
+
+  "forgotPasswordLink": "نسيت كلمة المرور؟",
+  "forgotPasswordTitle": "نسيت كلمة المرور؟",
+  "forgotPasswordSubtitle": "أدخل بريدك الإلكتروني وسنرسل لك رمز إعادة التعيين",
+  "sendCodeButton": "إرسال الرمز",
+  "resetCodeSentMessage": "إذا كان البريد الإلكتروني مسجلاً، ستتلقى رمز إعادة التعيين.",
+  "checkEmailTitle": "تحقق من بريدك الإلكتروني",
+  "checkEmailSubtitle": "أرسلنا رمزاً من 6 أرقام إلى {email}",
+  "@checkEmailSubtitle": {
+    "placeholders": {
+      "email": {"type": "String"}
+    }
+  },
+  "enterCodeHint": "أدخل الرمز المكون من 6 أرقام",
+  "verifyCodeButton": "تحقق من الرمز",
+  "resendCodeButton": "إعادة إرسال الرمز",
+  "invalidResetCode": "الرمز غير صحيح أو منتهي الصلاحية. حاول مجدداً.",
+  "createNewPasswordTitle": "كلمة مرور جديدة",
+  "createNewPasswordSubtitle": "اختر كلمة مرور قوية جديدة",
+  "newPasswordLabel": "كلمة المرور الجديدة",
+  "confirmNewPasswordLabel": "تأكيد كلمة المرور الجديدة",
+  "resetPasswordButton": "إعادة تعيين كلمة المرور",
+  "passwordResetSuccessMessage": "تمت إعادة تعيين كلمة المرور بنجاح! يرجى تسجيل الدخول.",
+  "demoCodeLabel": "رمز العرض التجريبي: {code}",
+  "@demoCodeLabel": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+
+  "voiceModeLabel": "صوت",
+  "textModeLabel": "نص",
+  "preparingLessonLabel": "نُحضّر درسك…"
 }

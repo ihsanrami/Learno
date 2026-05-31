@@ -9,7 +9,7 @@
 class ApiConfig {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.8.79:8000/api/v1',
+    defaultValue: 'http://localhost:8000/api/v1',
   );
 
   static String get serverRoot {
@@ -33,6 +33,9 @@ class ApiConfig {
   static const String authLogout = '/auth/logout';
   static const String authRefresh = '/auth/refresh';
   static const String authMe = '/auth/me';
+  static const String authForgotPassword = '/auth/forgot-password';
+  static const String authVerifyResetCode = '/auth/verify-reset-code';
+  static const String authResetPassword = '/auth/reset-password';
 
   // Children
   static const String children = '/children/';

@@ -1,0 +1,51 @@
+# Render.com deployment config — connect your GitHub repo and Render picks this up.
+# Secrets (OPENAI_API_KEY, JWT_SECRET_KEY, SMTP_*) must be set manually in the
+# Render dashboard under Environment → Secret Files or Environment Variables.
+# They are NOT stored here.
+
+services:
+  - type: web
+    name: learno-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free  # upgrade to starter ($7/mo) to unlock persistent disk below
+
+    envVars:
+      # -- Secrets: fill these in the Render dashboard (never commit real values) --
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+
+      # -- Optional SMTP (leave blank to use DEBUG code flow instead) --
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+
+      # -- Non-secret config --
+      - key: DEBUG
+        value: "false"
+      - key: ALLOWED_ORIGINS
+        value: "*"
+
+      # SQLite path — points into the persistent disk below.
+      # On the FREE plan the disk is ephemeral (data resets on redeploy).
+      # Upgrade to starter plan and uncomment the disk section to persist data.
+      - key: DATABASE_URL
+        value: sqlite:///./data/learno.db
+
+    # Persistent disk — REQUIRES Starter plan ($7/mo).
+    # Comment this section out on the free plan; SQLite will use ephemeral storage
+    # (acceptable for demos — accounts reset on each redeploy).
+    disk:
+      name: learno-data
+      mountPath: /app/data
+      sizeGB: 1

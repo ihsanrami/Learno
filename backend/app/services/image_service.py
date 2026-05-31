@@ -10,7 +10,12 @@ from pathlib import Path
 import openai
 from app.config import settings
 from app.utils.exceptions import AIServiceError
-from app.services.image_proxy import download_and_cache_sync, download_and_cache_async
+from app.services.image_proxy import (
+    download_and_cache_sync,
+    download_and_cache_async,
+    save_b64_image_sync,
+    save_b64_image_async,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,11 +28,10 @@ class ImageGenerationService:
     def __init__(self):
         openai.api_key = settings.OPENAI_API_KEY
         
-        # Image settings
-        self.model = "dall-e-3"  # or "dall-e-2" for cheaper option
-        self.size = "1024x1024"  # DALL-E 3 sizes: 1024x1024, 1792x1024, 1024x1792
-        self.quality = "standard"  # "standard" or "hd"
-        self.style = "vivid"  # "vivid" or "natural"
+        # Image settings (gpt-image-1 replaces dall-e-3 as of 2025)
+        self.model = "gpt-image-1"
+        self.size = "1024x1024"
+        self.quality = "auto"   # gpt-image-1: "low" | "medium" | "high" | "auto"
         self.timeout = 60  # Timeout in seconds
         
         # Cache directory for generated images
@@ -91,23 +95,16 @@ class ImageGenerationService:
                 prompt=dalle_prompt,
                 size=self.size,
                 quality=self.quality,
-                style=self.style,
                 n=1,
-                response_format="url"  # or "b64_json" for base64
             )
-            
-            # Extract URL
-            dalle_url = response.data[0].url
 
-            # Proxy: download immediately so the URL never expires
-            proxied = await download_and_cache_async(dalle_url)
-            image_url = proxied if proxied else dalle_url
-            if not proxied:
-                logger.warning("Image proxy failed; falling back to DALL-E URL")
+            # gpt-image-1 returns b64_json; save locally for a permanent URL
+            b64_data = response.data[0].b64_json
+            image_url = await save_b64_image_async(b64_data)
+            if not image_url:
+                return None, "Failed to save generated image"
 
-            # Cache the result
             self._cache[cache_key] = image_url
-
             logger.info(f"Image generated successfully: {cache_key}")
             return image_url, None
             
@@ -143,27 +140,21 @@ class ImageGenerationService:
                 prompt=dalle_prompt,
                 size=self.size,
                 quality=self.quality,
-                style=self.style,
                 n=1,
-                response_format="url"
             )
-            
-            dalle_url = response.data[0].url
 
-            # Proxy: download immediately so the URL never expires
-            proxied = download_and_cache_sync(dalle_url)
-            image_url = proxied if proxied else dalle_url
-            if not proxied:
-                logger.warning("Image proxy failed; falling back to DALL-E URL")
+            # gpt-image-1 returns b64_json; save locally for a permanent URL
+            b64_data = response.data[0].b64_json
+            image_url = save_b64_image_sync(b64_data)
+            if not image_url:
+                return None, "Failed to save generated image"
 
             # Enforce cache size limit
             if len(self._cache) >= self.MAX_CACHE_SIZE:
                 oldest_key = next(iter(self._cache))
                 del self._cache[oldest_key]
-                logger.debug(f"Cache full, removed: {oldest_key}")
 
             self._cache[cache_key] = image_url
-
             logger.info(f"Image generated successfully: {cache_key}")
             return image_url, None
             

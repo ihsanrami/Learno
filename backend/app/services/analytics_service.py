@@ -95,6 +95,39 @@ def end_session(
     return session
 
 
+def get_today_minutes(db: Session, child_id: int) -> tuple:
+    """Return (today_minutes, target_minutes).
+
+    today_minutes — sum of duration_seconds of all sessions started today (UTC), in minutes.
+    In-progress sessions have duration_seconds = 0 (not yet finalized), so they are
+    intentionally excluded from the count — the child can always finish a live session.
+
+    target_minutes — from the child's active daily_goal.
+    Returns 0 if no active goal exists, meaning no limit is enforced.
+    """
+    today = datetime.now(timezone.utc).date()
+    today_start = datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
+    today_end = today_start + timedelta(days=1)
+
+    sessions = (
+        db.query(LearningSession)
+        .filter(
+            LearningSession.child_id == child_id,
+            LearningSession.started_at >= today_start,
+            LearningSession.started_at < today_end,
+        )
+        .all()
+    )
+
+    today_seconds = sum(s.duration_seconds or 0 for s in sessions)
+    today_minutes = today_seconds // 60
+
+    goal = _get_active_goal(db, child_id)
+    target_minutes = goal.target_minutes if goal else 0
+
+    return today_minutes, target_minutes
+
+
 def get_child_overview(db: Session, child_id: int) -> dict:
     today = datetime.now(timezone.utc).date()
     today_start = datetime(today.year, today.month, today.day, tzinfo=timezone.utc)

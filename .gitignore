@@ -1,44 +1,46 @@
-# Flutter
-build/
-**/build/
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.metadata
-**/ios/Flutter/Generated.xcconfig
-**/ios/Flutter/flutter_export_environment.sh
-**/ios/Flutter/ephemeral/
-
-# Android
-**/.gradle/
-**/local.properties
-
-# Python
-venv/
-__pycache__/
-*.pyc
-.pytest_cache/
+# ── Secrets — NEVER commit ────────────────────────────────────────────────────
 .env
+.env.*
+!.env.example
 
-# Logs
-*.log
-
-# AI-generated images (served via proxy, not committed)
-**/static/generated_images/
-
-# SQLite databases
+# ── Database — contains real user data ────────────────────────────────────────
 *.db
 *.sqlite
 *.sqlite3
 
-# IDE
-.idea/
-.vscode/
+# ── Python bytecode ────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
 
-# OS artifacts
+# ── Logs ───────────────────────────────────────────────────────────────────────
+*.log
+debug.log
+
+# ── Python virtual environments ───────────────────────────────────────────────
+venv/
+.venv/
+env/
+
+# ── Runtime-generated images (recreated by server on demand) ──────────────────
+backend/static/
+
+# ── Flutter / Dart build + generated files ────────────────────────────────────
+frontend/build/
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+
+# ── Android — machine-specific local config ───────────────────────────────────
+frontend/android/local.properties
+frontend/android/.gradle/
+frontend/android/.kotlin/
+
+# ── IDE project files ─────────────────────────────────────────────────────────
+.idea/
+*.swp
+*.swo
+
+# ── OS artifacts ──────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
-desktop.ini
-
-# Claude Code
-.claude/

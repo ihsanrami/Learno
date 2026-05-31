@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:learno/l10n/app_localizations.dart';
 
 import '../core/session_state.dart';
-import '../api/api_service.dart';
+import '../api/api_service.dart'; // also exports DailyLimitException
 import '../api/api_config.dart';
 import '../api/dto.dart';
 import '../models/message_queue.dart';
@@ -39,6 +39,8 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isSpeaking = false;
   bool _isListening = false;
 
+  bool _sessionEnded = false;
+
   MessageQueue? _currentQueue;
   bool _showTypingIndicator = false;
 
@@ -59,6 +61,18 @@ class _ChatScreenState extends State<ChatScreen> {
     _startSession();
   }
 
+  /// Calls /session/end exactly once — guards against double calls from both
+  /// the dialog button and dispose().
+  Future<void> _endSessionOnce() async {
+    if (_sessionEnded || !SessionState.isActive) return;
+    _sessionEnded = true;
+    try {
+      await ApiService.endSession();
+    } catch (e) {
+      debugPrint('[ChatScreen] endSession failed: $e');
+    }
+  }
+
   @override
   void dispose() {
     _textController.dispose();
@@ -67,6 +81,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _currentQueue?.cancel();
     _tts.dispose();
     _stt.dispose();
+    _endSessionOnce(); // fire-and-forget safety net for back-button exits
     super.dispose();
   }
 
@@ -140,6 +155,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
       _enqueueResponse(response.learnoResponse);
       _scrollToBottom();
+    } on DailyLimitException {
+      setState(() {
+        _isLoading = false;
+        _isStartingSession = false;
+      });
+      _showDailyLimitDialog();
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -148,6 +169,40 @@ class _ChatScreenState extends State<ChatScreen> {
       });
       _showError(e.toString());
     }
+  }
+
+  void _showDailyLimitDialog() {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(l10n.dailyLimitTitle, textAlign: TextAlign.center),
+        content: Text(
+          l10n.dailyLimitMessage,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontFamily: 'NotoSans', fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // close dialog
+              Navigator.of(context).pop(); // return to topic picker
+            },
+            child: Text(
+              l10n.okButton,
+              style: const TextStyle(
+                fontFamily: 'NotoSans',
+                fontSize: 18,
+                color: Color(0xFFFF8D00),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _enqueueResponse(LearnoResponse response) {
@@ -411,31 +466,40 @@ class _ChatScreenState extends State<ChatScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(l10n.greatJobTitle, textAlign: TextAlign.center),
+        title: Text(l10n.greatJobTitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                fontFamily: 'NotoSans',
+                fontFamilyFallback: ['NotoSansArabic'])),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(l10n.lessonCompletedMessage,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18)),
+                style: const TextStyle(fontFamily: 'NotoSans', fontSize: 18)),
             const SizedBox(height: 16),
             Text(l10n.correctAnswersCount(SessionState.totalCorrect),
-                style: const TextStyle(fontSize: 16)),
+                style: const TextStyle(fontFamily: 'NotoSans', fontSize: 16)),
             const SizedBox(height: 8),
             Text(l10n.accuracyScoreLabel(accuracy.toStringAsFixed(0)),
-                style: const TextStyle(fontSize: 16)),
+                style: const TextStyle(fontFamily: 'NotoSans', fontSize: 16)),
             const SizedBox(height: 16),
-            Text(l10n.youAreAStar, style: const TextStyle(fontSize: 20)),
+            Text(l10n.youAreAStar,
+                style: const TextStyle(fontFamily: 'NotoSans', fontSize: 20)),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
+            onPressed: () async {
+              // Capture the navigator before the async gap so it remains
+              // valid even if the widget tree changes during the await.
+              final nav = Navigator.of(context);
+              await _endSessionOnce();
+              nav.pop(); // close dialog
+              nav.pop(); // return to lesson picker
             },
             child: Text(l10n.continueButton,
-                style: const TextStyle(fontSize: 18)),
+                style: const TextStyle(fontFamily: 'NotoSans', fontSize: 18)),
           ),
         ],
       ),
@@ -446,7 +510,10 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-          content: Text(message),
+          content: Text(message,
+              style: const TextStyle(
+                  fontFamily: 'NotoSans',
+                  fontFamilyFallback: ['NotoSansArabic'])),
           backgroundColor: const Color(0xFF76310F)),
     );
   }
@@ -495,30 +562,38 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: const Color(0xFFFF8D00),
       foregroundColor: Colors.white,
       actions: [
-        if (_progress != null)
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: _getLevelColor(SessionState.learningLevel),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(_getLevelIcon(SessionState.learningLevel),
-                    size: 16, color: Colors.white),
-                const SizedBox(width: 4),
-                Text(_getLevelText(SessionState.learningLevel, l10n),
-                    style: const TextStyle(fontSize: 12, color: Colors.white)),
-              ],
+        if (_progress != null && SessionState.learningLevel.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFEDDC),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFFF8D00), width: 1.5),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(_getLevelIcon(SessionState.learningLevel),
+                      size: 14, color: const Color(0xFFFF8D00)),
+                  const SizedBox(width: 5),
+                  Text(
+                    _getLevelText(SessionState.learningLevel, l10n),
+                    style: const TextStyle(
+                      fontFamily: 'NotoSans',
+                      fontFamilyFallback: ['NotoSansArabic'],
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF44200B),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        IconButton(
-          icon: Icon(_isVoiceMode ? Icons.mic : Icons.mic_off),
-          onPressed: _toggleVoiceMode,
-          tooltip: _isVoiceMode ? l10n.voiceOnTooltip : l10n.voiceOffTooltip,
-        ),
       ],
     );
   }
@@ -539,11 +614,18 @@ class _ChatScreenState extends State<ChatScreen> {
                 l10n.conceptProgressLabel(
                     progress.currentConcept, progress.totalConcepts),
                 style: const TextStyle(
-                    fontWeight: FontWeight.w600, color: Color(0xFF44200B)),
+                    fontFamily: 'NotoSans',
+                    fontFamilyFallback: ['NotoSansArabic'],
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF44200B)),
               ),
               Text(
                 '✅ ${progress.totalCorrect}  ❌ ${progress.totalWrong}',
-                style: const TextStyle(fontSize: 14, color: Color(0xFF44200B)),
+                style: const TextStyle(
+                    fontFamily: 'NotoSans',
+                    fontFamilyFallback: ['NotoSansArabic'],
+                    fontSize: 14,
+                    color: Color(0xFF44200B)),
               ),
             ],
           ),
@@ -584,52 +666,90 @@ class _ChatScreenState extends State<ChatScreen> {
     final isUser = msg.isUser;
     final maxWidth = MediaQuery.of(context).size.width * 0.75;
 
-    Widget bubble = Align(
+    final textStyle = const TextStyle(
+      fontFamily: 'NotoSans',
+      fontFamilyFallback: ['NotoSansArabic'],
+      color: Color(0xFF44200B),
+      fontSize: 16,
+      height: 1.4,
+    );
+
+    Widget textBubble;
+    if (isUser) {
+      textBubble = Container(
+        padding: const EdgeInsets.all(14),
+        decoration: const BoxDecoration(
+          color: Color(0xFFFFB876),
+          borderRadius: BorderRadius.all(Radius.circular(18)),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x0D000000), // black @ 5% opacity — const-safe
+              blurRadius: 5,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Text(msg.text, style: textStyle),
+      );
+    } else {
+      // AI bubble: 3px orange accent on the start side (left in LTR, right in RTL).
+      // Uses ClipRRect + nested containers to avoid the non-uniform border +
+      // borderRadius restriction in BoxDecoration.
+      textBubble = Container(
+        decoration: const BoxDecoration(
+          borderRadius: BorderRadius.all(Radius.circular(18)),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x0D000000),
+              blurRadius: 5,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            color: const Color(0xFFFF8D00),
+            padding: const EdgeInsetsDirectional.only(start: 3),
+            child: Container(
+              color: const Color(0xFFFFEDDC),
+              padding: const EdgeInsets.all(14),
+              child: Text(msg.text, style: textStyle),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final bubble = Align(
       alignment: isUser ? Alignment.centerLeft : Alignment.centerRight,
       child: Container(
         constraints: BoxConstraints(maxWidth: maxWidth),
-        margin: const EdgeInsets.symmetric(vertical: 6),
+        margin: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           crossAxisAlignment:
               isUser ? CrossAxisAlignment.start : CrossAxisAlignment.end,
           children: [
             if (msg.imageUrl != null) _buildMessageImage(msg.imageUrl!, l10n),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: isUser
-                    ? const Color(0xFFFFB876)
-                    : const Color(0xFFFFEDDC),
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Text(
-                msg.text,
-                style: const TextStyle(
-                  color: Color(0xFF44200B),
-                  fontSize: 16,
-                  height: 1.4,
-                ),
-              ),
-            ),
+            textBubble,
           ],
         ),
       ),
     );
 
-    if (isUser) return bubble;
+    // Fade + slide-up animation for all messages (user: 150ms, AI: 250ms)
     return TweenAnimationBuilder<double>(
       key: ValueKey(msg.id),
       tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 200),
-      builder: (context, opacity, child) =>
-          Opacity(opacity: opacity, child: child!),
+      duration: Duration(milliseconds: isUser ? 150 : 250),
+      curve: Curves.easeOut,
+      builder: (context, t, child) => Opacity(
+        opacity: t,
+        child: Transform.translate(
+          offset: Offset(0, 12 * (1 - t)),
+          child: child!,
+        ),
+      ),
       child: bubble,
     );
   }
@@ -639,11 +759,11 @@ class _ChatScreenState extends State<ChatScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Color(0x1A000000), // black @ 10% opacity — const-safe
               blurRadius: 8,
-              offset: const Offset(0, 2)),
+              offset: Offset(0, 2)),
         ],
       ),
       child: ClipRRect(
@@ -673,7 +793,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 const SizedBox(height: 8),
                 Text(l10n.imageNotAvailableLabel,
                     style: const TextStyle(
-                        color: Color(0xFF76310F), fontSize: 12)),
+                        fontFamily: 'NotoSans',
+                        fontFamilyFallback: ['NotoSansArabic'],
+                        color: Color(0xFF76310F),
+                        fontSize: 12)),
               ],
             ),
           ),
@@ -683,9 +806,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildLoadingIndicator(AppLocalizations l10n) {
-    final label = _isStartingSession
-        ? 'Preparing your lesson…\nThis may take up to a minute.'
-        : l10n.thinkingLabel;
+    final label = _isStartingSession ? l10n.preparingLessonLabel : l10n.thinkingLabel;
     return Align(
       alignment: Alignment.centerRight,
       child: Container(
@@ -707,9 +828,63 @@ class _ChatScreenState extends State<ChatScreen> {
             const SizedBox(width: 10),
             Flexible(
               child: Text(label,
-                  style: const TextStyle(color: Color(0xFF44200B))),
+                  style: const TextStyle(
+                      fontFamily: 'NotoSans', color: Color(0xFF44200B))),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModeToggle(AppLocalizations l10n) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFEDDC),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildToggleSegment(
+            label: '🎤 ${l10n.voiceModeLabel}',
+            active: _isVoiceMode,
+            onTap: () { if (!_isVoiceMode) _toggleVoiceMode(); },
+          ),
+          _buildToggleSegment(
+            label: '⌨️ ${l10n.textModeLabel}',
+            active: !_isVoiceMode,
+            onTap: () { if (_isVoiceMode) _toggleVoiceMode(); },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleSegment({
+    required String label,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFFFF8D00) : Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'NotoSans',
+            color: active ? Colors.white : const Color(0xFF44200B),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
         ),
       ),
     );
@@ -720,11 +895,11 @@ class _ChatScreenState extends State<ChatScreen> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
+          _buildModeToggle(l10n),
           if (_isSpeaking || _isListening)
             Container(
               margin: const EdgeInsets.only(bottom: 8),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: _isSpeaking ? Colors.blue[100] : Colors.green[100],
                 borderRadius: BorderRadius.circular(20),
@@ -743,6 +918,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         ? l10n.learnoIsSpeakingLabel
                         : l10n.listeningLabel,
                     style: TextStyle(
+                      fontFamily: 'NotoSans',
+                      fontFamilyFallback: const ['NotoSansArabic'],
                       color: _isSpeaking
                           ? Colors.blue[700]
                           : Colors.green[700],
@@ -752,37 +929,17 @@ class _ChatScreenState extends State<ChatScreen> {
                 ],
               ),
             ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2)),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    onSubmitted: _inputBlocked ? null : (t) => _sendMessage(t),
-                    decoration: InputDecoration(
-                      hintText: _isVoiceMode
-                          ? l10n.tapMicOrTypeHint
-                          : l10n.typeYourAnswerHint,
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-                if (_isVoiceMode)
+          if (_isVoiceMode)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   GestureDetector(
                     onTap: _isListening ? _stopListening : _startListening,
                     child: Container(
-                      padding: const EdgeInsets.all(12),
+                      width: 72,
+                      height: 72,
                       decoration: BoxDecoration(
                         color: _isListening
                             ? const Color(0xFF76310F)
@@ -792,35 +949,65 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: Icon(
                         _isListening ? Icons.stop : Icons.mic,
                         color: Colors.white,
-                        size: 26,
+                        size: 34,
                       ),
                     ),
                   ),
-                if (!_isVoiceMode || _textController.text.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.send, color: Color(0xFFFF8D00)),
-                    iconSize: 28,
-                    onPressed: _inputBlocked
+                ],
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFEDDC),
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x1A000000),
+                    blurRadius: 10,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _textController,
+                      onSubmitted: _inputBlocked ? null : (t) => _sendMessage(t),
+                      decoration: InputDecoration(
+                        hintText: l10n.typeYourAnswerHint,
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _inputBlocked
                         ? null
                         : () => _sendMessage(_textController.text),
+                    child: Container(
+                      width: 46,
+                      height: 46,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFF8D00),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.send,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
   }
 
-  Color _getLevelColor(String level) {
-    switch (level) {
-      case 'struggling': return Colors.orange;
-      case 'developing': return Colors.blue;
-      case 'proficient': return Colors.green;
-      case 'advanced':   return Colors.purple;
-      default:           return Colors.grey;
-    }
-  }
 
   IconData _getLevelIcon(String level) {
     switch (level) {

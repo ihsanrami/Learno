@@ -372,6 +372,13 @@ class TopicData {
       );
 }
 
+class ForgotPasswordResult {
+  final String message;
+  final String? debugCode;
+
+  ForgotPasswordResult({required this.message, this.debugCode});
+}
+
 class SilenceResponse {
   final String status;
   final String message;

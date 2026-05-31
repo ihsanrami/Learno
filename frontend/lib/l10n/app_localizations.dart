@@ -1003,6 +1003,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Star!'**
   String get levelStar;
+
+  /// No description provided for @okButton.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get okButton;
+
+  /// No description provided for @dailyLimitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Goal Reached! 🌟'**
+  String get dailyLimitTitle;
+
+  /// No description provided for @dailyLimitMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve reached your learning goal for today! 🌟 Come back tomorrow to keep going.'**
+  String get dailyLimitMessage;
+
+  /// No description provided for @gradeLockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade Locked 🔒'**
+  String get gradeLockedTitle;
+
+  /// No description provided for @gradeLockedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This grade isn\'t unlocked for you yet. Keep learning and you\'ll get there! 🌟'**
+  String get gradeLockedMessage;
+
+  /// No description provided for @forgotPasswordLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot Password?'**
+  String get forgotPasswordLink;
+
+  /// No description provided for @forgotPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot Password?'**
+  String get forgotPasswordTitle;
+
+  /// No description provided for @forgotPasswordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email and we\'ll send you a reset code'**
+  String get forgotPasswordSubtitle;
+
+  /// No description provided for @sendCodeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Code'**
+  String get sendCodeButton;
+
+  /// No description provided for @resetCodeSentMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'If this email is registered, you\'ll receive a reset code.'**
+  String get resetCodeSentMessage;
+
+  /// No description provided for @checkEmailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Your Email'**
+  String get checkEmailTitle;
+
+  /// No description provided for @checkEmailSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a 6-digit code to {email}'**
+  String checkEmailSubtitle(String email);
+
+  /// No description provided for @enterCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter 6-digit code'**
+  String get enterCodeHint;
+
+  /// No description provided for @verifyCodeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Code'**
+  String get verifyCodeButton;
+
+  /// No description provided for @resendCodeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend Code'**
+  String get resendCodeButton;
+
+  /// No description provided for @invalidResetCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid or expired code. Please try again.'**
+  String get invalidResetCode;
+
+  /// No description provided for @createNewPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get createNewPasswordTitle;
+
+  /// No description provided for @createNewPasswordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a strong new password'**
+  String get createNewPasswordSubtitle;
+
+  /// No description provided for @newPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get newPasswordLabel;
+
+  /// No description provided for @confirmNewPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm New Password'**
+  String get confirmNewPasswordLabel;
+
+  /// No description provided for @resetPasswordButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Password'**
+  String get resetPasswordButton;
+
+  /// No description provided for @passwordResetSuccessMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset successfully! Please log in.'**
+  String get passwordResetSuccessMessage;
+
+  /// No description provided for @demoCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo code: {code}'**
+  String demoCodeLabel(String code);
+
+  /// No description provided for @voiceModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice'**
+  String get voiceModeLabel;
+
+  /// No description provided for @textModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get textModeLabel;
+
+  /// No description provided for @preparingLessonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing your lesson…'**
+  String get preparingLessonLabel;
 }
 
 class _AppLocalizationsDelegate

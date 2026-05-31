@@ -1,0 +1,20 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # DALL-E images: bind-mounted so files appear on the host for debugging
+      - ./backend/static:/app/static
+      # SQLite DB: named volume avoids the "Docker creates a directory" problem
+      # that occurs with bind-mounts when the file doesn't exist yet
+      - learno_db:/app/data
+    env_file:
+      - ./backend/.env
+    environment:
+      # Override DATABASE_URL to write the DB into the named volume
+      - DATABASE_URL=sqlite:///./data/learno.db
+    restart: unless-stopped
+
+volumes:
+  learno_db:

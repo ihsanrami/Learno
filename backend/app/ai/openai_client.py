@@ -87,6 +87,21 @@ class LearnoAIClient:
             logger.warning(f"JSON mode failed ({e}), retrying without response_format")
             return self.generate_response(messages)
 
+    def generate_eval_response(self, messages: List[Dict[str, str]]) -> str:
+        """Lightweight binary eval using gpt-4o-mini — returns 'YES', 'NO', or 'UNKNOWN'."""
+        try:
+            response = openai.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages,
+                max_tokens=5,
+                temperature=0.0,
+            )
+            content = response.choices[0].message.content
+            return content.strip() if content else "NO"
+        except Exception as e:
+            logger.warning(f"Eval call failed (non-fatal): {e}")
+            return "UNKNOWN"
+
 
 _ai_client: Optional[LearnoAIClient] = None
 

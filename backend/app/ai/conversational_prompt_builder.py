@@ -8,7 +8,7 @@ Each turn: child profile + topic guide + FULL conversation history → GPT-4o
 The AI generates a fresh, contextual response every time.
 """
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
 def determine_lesson_language(subject: str, app_language: str = "en") -> str:
@@ -96,7 +96,17 @@ def _stage_instructions(stage: str, child_name: str) -> str:
             f"4. If off-topic: playfully connect what they said to the lesson\n"
             f"5. Teach ONE new idea per message — short, conversational, relatable\n"
             f"6. Every 3-4 exchanges: check understanding naturally\n"
-            f"   e.g. 'هل هذا واضح؟ 🤔' / 'Does that make sense so far? 🤔'\n\n"
+            f"   e.g. 'هل هذا واضح؟ 🤔' / 'Does that make sense so far? 🤔'\n"
+            f"7. VISUALS (REQUIRED): Every 2-3 teaching turns, add [GENERATE_IMAGE: <description>]\n"
+            f"   at the VERY END of your message — after all text content.\n"
+            f"   You MUST include at least ONE image per lesson. Do not skip this.\n"
+            f"   Description rules: English only · 5-15 words · simple object/scene/animal\n"
+            f"   Good examples:\n"
+            f"     [GENERATE_IMAGE: a colorful apple on a wooden table]\n"
+            f"     [GENERATE_IMAGE: cartoon bear counting fingers one two three]\n"
+            f"     [GENERATE_IMAGE: blue water cycle with clouds rain and river]\n"
+            f"     [GENERATE_IMAGE: red circle blue square yellow triangle on white background]\n"
+            f"   Bad (do NOT use): vague, abstract, or text-heavy descriptions\n\n"
             f"When ALL key concepts have been genuinely covered and {child_name} shows understanding:\n"
             f"Transition naturally: 'ماشا الله {child_name}! خلينا نشوف شو تعلمنا 🎉'\n"
             f"Add [START_REVIEW] at the VERY END of that transition message."
@@ -129,6 +139,7 @@ def build_conversational_prompt(
     topic_info: dict,
     conversation_history: List[Dict[str, str]],
     turn_count: int = 0,
+    answer_eval: Optional[bool] = None,
 ) -> List[Dict[str, str]]:
     """
     Build a contextual prompt for ONE conversational turn.
@@ -142,6 +153,33 @@ def build_conversational_prompt(
     lang = "Arabic (العربية)" if lesson_language == "ar" else "English"
     topic_str = _format_topic_guide(topic_info)
     stage = _stage_instructions(lesson_stage, child_name)
+
+    eval_block = ""
+    if answer_eval is True:
+        eval_block = (
+            "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "THIS TURN — ANSWER VERIFIED: ✅ CORRECT\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "The child's answer has been independently verified as CORRECT.\n"
+            "• Begin your response with [CORRECT]\n"
+            "• Praise their specific words — quote what they actually said\n"
+            "• Then move the lesson forward\n"
+        )
+    elif answer_eval is False:
+        eval_block = (
+            "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "THIS TURN — ANSWER VERIFIED: ❌ INCORRECT\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "The child's answer has been independently verified as INCORRECT.\n"
+            "• Begin your response with [WRONG]\n"
+            "• Do NOT praise the wrong answer — NEVER say "
+            '"رائع" / "ممتاز" / "أحسنت" / "Great" / "Excellent" / "Perfect"\n'
+            "• Be warm and gently honest — example phrases:\n"
+            '  Arabic: "قريب! خلينا نجرب مرة ثانية 😊" or "مش تمامًا — بس أنت قريب! 💪"\n'
+            '  English: "Not quite! Let\'s try again 😊" or "Close! One more try 💪"\n'
+            "• Give a gentle hint or re-explain using a DIFFERENT example (never repeat same wording)\n"
+            "• Stay warm and supportive — these are young children, never make them feel bad\n"
+        )
 
     system = f"""You are Learno 🦊 — a brilliant, warm, patient AI tutor for children aged 4-10.
 You are having a REAL conversation with {child_name}. You are NOT following any script.
@@ -160,12 +198,14 @@ RESPONSE LANGUAGE: {lang}
 ⚠️  EVERY word must be in {lang}.
 Do NOT mix languages. Do NOT switch languages for any reason.
 Even if {child_name} writes in another language, you respond in {lang}.
+Exception: [GENERATE_IMAGE: description] uses an English description — this is a system marker, not a language violation.
+Exception: [CORRECT], [WRONG], [END_SESSION], [START_REVIEW], [LESSON_COMPLETE] are always in English brackets — this is required, not a language violation.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 {topic_str}
 
 {stage}
-
+{eval_block}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 HOW TO WRITE YOUR RESPONSE (STRICT)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -182,7 +222,7 @@ HOW TO WRITE YOUR RESPONSE (STRICT)
 
 ✅ End with EXACTLY ONE question or engaging prompt
 
-✅ Under 60 words total
+✅ Under 80 words for response text — control markers like [GENERATE_IMAGE: ...] are NOT counted toward this limit
 
 ✅ Warm, curious, playful — NEVER robotic, NEVER like reading from a script
 
@@ -202,10 +242,22 @@ ABSOLUTE PROHIBITIONS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SPECIAL MARKERS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Append these at the VERY END of your message (after all content) when needed:
+ACCURACY MARKERS — place at the VERY START of your response (TEACHING and REVIEW stages only):
+[CORRECT] — child's answer was correct or right
+[WRONG] — child's answer was wrong or incomplete
+  • These are system control markers — stripped before display and TTS, NEVER shown to or spoken to the child
+  • Always use English brackets regardless of lesson language
+  • Only emit when the child gave a substantive answer (not during greeting or warmup)
+
+FLOW MARKERS — place at the VERY END of your response (after all content):
 [END_SESSION] — child clearly refused to start after 2 genuine attempts
 [START_REVIEW] — all key concepts genuinely covered; transition to review
 [LESSON_COMPLETE] — review done and lesson fully celebrated
+[GENERATE_IMAGE: <English description>] — TEACHING stage only; generates a
+  child-friendly illustration. Required at least once per lesson; use every
+  2-3 turns. Description: English, 5-15 words, simple visual (object/animal/scene).
+  Never use in greeting, warmup, or review stages.
+  IMPORTANT: append this marker even if it takes you slightly over the word limit. It is required.
 """
 
     # System prompt + full conversation history

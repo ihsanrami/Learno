@@ -1,0 +1,22 @@
+# Secrets — never bake into image
+.env
+
+# Database — managed via volume at runtime
+*.db
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Tests — not needed in production image
+tests/
+pytest_results.txt
+conftest.py
+
+# Version files
+.python-version
+
+# Logs
+*.log

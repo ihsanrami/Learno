@@ -36,3 +36,25 @@ def decode_access_token(token: str) -> dict:
     if payload.get("type") != "access":
         raise jwt.InvalidTokenError("Not an access token")
     return payload
+
+
+def create_reset_token(parent_id: int, reset_token_id: int) -> str:
+    """Short-lived JWT valid only for the specific reset token row in the DB."""
+    expire = _utcnow() + timedelta(minutes=settings.RESET_TOKEN_EXPIRE_MINUTES)
+    payload = {
+        "sub": str(parent_id),
+        "type": "reset",
+        "reset_id": reset_token_id,
+        "exp": expire,
+        "iat": _utcnow(),
+        "jti": secrets.token_hex(8),
+    }
+    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+
+def decode_reset_token(token: str) -> dict:
+    """Raises jwt.PyJWTError on invalid/expired token."""
+    payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+    if payload.get("type") != "reset":
+        raise jwt.InvalidTokenError("Not a reset token")
+    return payload

@@ -6,11 +6,16 @@ from app.auth.dependencies import get_current_parent
 from app.auth.models import Parent
 from app.auth.schemas import (
     AccessToken,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
     ParentLogin,
     ParentOut,
     ParentRegister,
     RefreshRequest,
+    ResetPasswordRequest,
     TokenPair,
+    VerifyCodeResponse,
+    VerifyResetCodeRequest,
 )
 from app.database.session import get_db
 from app.rate_limiter import limiter
@@ -56,3 +61,42 @@ async def logout(data: RefreshRequest, db: Session = Depends(get_db)):
 @router.get("/me", response_model=ParentOut)
 async def me(current_parent: Parent = Depends(get_current_parent)):
     return current_parent
+
+
+@router.post("/forgot-password", response_model=ForgotPasswordResponse)
+@limiter.limit("5/minute")
+async def forgot_password(
+    request: Request, data: ForgotPasswordRequest, db: Session = Depends(get_db)
+):
+    from app.auth.email_service import send_reset_email
+
+    message, raw_code, debug_code = service.request_password_reset(db, data.email)
+
+    if raw_code:
+        # Best-effort email — failure is logged and swallowed inside send_reset_email
+        await send_reset_email(data.email, raw_code)
+
+    return ForgotPasswordResponse(message=message, debug_code=debug_code)
+
+
+@router.post("/verify-reset-code", response_model=VerifyCodeResponse)
+@limiter.limit("10/minute")
+async def verify_reset_code(
+    request: Request, data: VerifyResetCodeRequest, db: Session = Depends(get_db)
+):
+    try:
+        reset_token = service.verify_reset_code(db, data.email, data.code)
+    except service.AuthError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return VerifyCodeResponse(reset_token=reset_token)
+
+
+@router.post("/reset-password", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("10/minute")
+async def reset_password(
+    request: Request, data: ResetPasswordRequest, db: Session = Depends(get_db)
+):
+    try:
+        service.reset_password(db, data.reset_token, data.new_password)
+    except service.AuthError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

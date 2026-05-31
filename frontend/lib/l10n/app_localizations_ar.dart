@@ -505,4 +505,92 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get levelStar => 'نجم!';
+
+  @override
+  String get okButton => 'حسنًا';
+
+  @override
+  String get dailyLimitTitle => 'تم بلوغ الهدف اليومي! 🌟';
+
+  @override
+  String get dailyLimitMessage =>
+      'لقد أتممت هدفك التعليمي لليوم! 🌟 عُد غدًا لمواصلة التعلم.';
+
+  @override
+  String get gradeLockedTitle => 'المرحلة مقفلة 🔒';
+
+  @override
+  String get gradeLockedMessage =>
+      'هذه المرحلة غير متاحة لك بعد. واصل التعلم وستصل إليها! 🌟';
+
+  @override
+  String get forgotPasswordLink => 'نسيت كلمة المرور؟';
+
+  @override
+  String get forgotPasswordTitle => 'نسيت كلمة المرور؟';
+
+  @override
+  String get forgotPasswordSubtitle =>
+      'أدخل بريدك الإلكتروني وسنرسل لك رمز إعادة التعيين';
+
+  @override
+  String get sendCodeButton => 'إرسال الرمز';
+
+  @override
+  String get resetCodeSentMessage =>
+      'إذا كان البريد الإلكتروني مسجلاً، ستتلقى رمز إعادة التعيين.';
+
+  @override
+  String get checkEmailTitle => 'تحقق من بريدك الإلكتروني';
+
+  @override
+  String checkEmailSubtitle(String email) {
+    return 'أرسلنا رمزاً من 6 أرقام إلى $email';
+  }
+
+  @override
+  String get enterCodeHint => 'أدخل الرمز المكون من 6 أرقام';
+
+  @override
+  String get verifyCodeButton => 'تحقق من الرمز';
+
+  @override
+  String get resendCodeButton => 'إعادة إرسال الرمز';
+
+  @override
+  String get invalidResetCode =>
+      'الرمز غير صحيح أو منتهي الصلاحية. حاول مجدداً.';
+
+  @override
+  String get createNewPasswordTitle => 'كلمة مرور جديدة';
+
+  @override
+  String get createNewPasswordSubtitle => 'اختر كلمة مرور قوية جديدة';
+
+  @override
+  String get newPasswordLabel => 'كلمة المرور الجديدة';
+
+  @override
+  String get confirmNewPasswordLabel => 'تأكيد كلمة المرور الجديدة';
+
+  @override
+  String get resetPasswordButton => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get passwordResetSuccessMessage =>
+      'تمت إعادة تعيين كلمة المرور بنجاح! يرجى تسجيل الدخول.';
+
+  @override
+  String demoCodeLabel(String code) {
+    return 'رمز العرض التجريبي: $code';
+  }
+
+  @override
+  String get voiceModeLabel => 'صوت';
+
+  @override
+  String get textModeLabel => 'نص';
+
+  @override
+  String get preparingLessonLabel => 'نُحضّر درسك…';
 }

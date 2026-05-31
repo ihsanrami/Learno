@@ -1,8 +1,10 @@
 """Lesson session and curriculum API routes."""
 
+import asyncio
 import logging
 import re
 from fastapi import APIRouter, Query, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, field_validator
 from typing import List, Optional
 
@@ -12,7 +14,7 @@ from app.models.curriculum import (
     GRADE_DISPLAY_NAMES, get_grade_display_name,
 )
 from app.rate_limiter import limiter
-from app.utils.exceptions import InvalidInputError
+from app.utils.exceptions import InvalidInputError, DailyLimitReachedError, GradeNotAllowedError
 
 logger = logging.getLogger(__name__)
 
@@ -187,14 +189,33 @@ async def start_session(request: Request, body: StartSessionRequest):
 
     service = get_conversational_lesson_service()
 
-    session, response = service.start_lesson(
-        grade=body.grade,
-        subject=body.subject,
-        lesson=body.lesson,
-        child_name=child_name,
-        app_language=body.app_language,
-        child_id=body.child_id,
-    )
+    try:
+        session, response = service.start_lesson(
+            grade=body.grade,
+            subject=body.subject,
+            lesson=body.lesson,
+            child_name=child_name,
+            app_language=body.app_language,
+            child_id=body.child_id,
+        )
+    except DailyLimitReachedError as e:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "status": "error",
+                "error_code": "daily_limit_reached",
+                "today_minutes": e.today_minutes,
+                "target_minutes": e.target_minutes,
+            },
+        )
+    except GradeNotAllowedError:
+        return JSONResponse(
+            status_code=403,
+            content={
+                "status": "error",
+                "error_code": "grade_not_allowed",
+            },
+        )
 
     return StartSessionResponse(
         status="success",
@@ -273,10 +294,19 @@ async def respond_to_question(request: Request, body: ChildResponseRequest):
     logger.info(f"Processing response: session={body.session_id}")
 
     service = get_conversational_lesson_service()
-    response = service.process_response(
-        session_id=body.session_id,
-        transcript=body.transcript,
+    loop = asyncio.get_running_loop()
+    response = await loop.run_in_executor(
+        None, service.process_response, body.session_id, body.transcript
     )
+    ctx = service._contexts.get(body.session_id)
+    progress = ProgressData(
+        lesson_phase=ctx.lesson_stage,
+        current_concept=1,
+        total_concepts=len(ctx.topic_info.get("concepts", [])),
+        concept_phase="",
+        total_correct=ctx.total_correct_signals,
+        total_wrong=ctx.total_wrong_signals,
+    ) if ctx else None
 
     return DynamicLessonResponse(
         status="success",
@@ -293,7 +323,7 @@ async def respond_to_question(request: Request, body: ChildResponseRequest):
                 image_position=response.image_position,
                 lesson_language=response.lesson_language,
             ),
-            progress=None,
+            progress=progress,
             is_complete=response.is_lesson_complete,
         )
     )
@@ -306,10 +336,19 @@ async def handle_silence(request: Request, body: SilenceNotificationRequest):
     logger.info(f"Handling silence: session={body.session_id} duration={body.silence_duration}s")
 
     service = get_conversational_lesson_service()
-    response = service.handle_silence(
-        session_id=body.session_id,
-        duration=body.silence_duration,
+    loop = asyncio.get_running_loop()
+    response = await loop.run_in_executor(
+        None, service.handle_silence, body.session_id, body.silence_duration
     )
+    ctx = service._contexts.get(body.session_id)
+    progress = ProgressData(
+        lesson_phase=ctx.lesson_stage,
+        current_concept=1,
+        total_concepts=len(ctx.topic_info.get("concepts", [])),
+        concept_phase="",
+        total_correct=ctx.total_correct_signals,
+        total_wrong=ctx.total_wrong_signals,
+    ) if ctx else None
 
     return DynamicLessonResponse(
         status="success",
@@ -326,7 +365,7 @@ async def handle_silence(request: Request, body: SilenceNotificationRequest):
                 image_position=response.image_position,
                 lesson_language=response.lesson_language,
             ),
-            progress=None,
+            progress=progress,
             is_complete=response.is_lesson_complete,
         )
     )

@@ -1,55 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:learno/l10n/app_localizations.dart';
 
-import '../../controllers/auth_controller.dart';
-import 'register_screen.dart';
-import 'child_list_screen.dart';
-import 'forgot_password_screen.dart';
+import '../../api/api_service.dart';
+import 'verify_code_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  final _controller = AuthController();
 
-  bool _obscurePassword = true;
   bool _isLoading = false;
   String? _error;
 
   @override
   void dispose() {
     _emailCtrl.dispose();
-    _passwordCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
+  Future<void> _sendCode() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _isLoading = true;
       _error = null;
     });
-    final ok = await _controller.login(
-      _emailCtrl.text.trim(),
-      _passwordCtrl.text,
-    );
-    if (!mounted) return;
-    if (ok) {
+
+    try {
+      final result = await ApiService.forgotPassword(_emailCtrl.text.trim());
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const ChildListScreen()),
+        MaterialPageRoute(
+          builder: (_) => VerifyCodeScreen(
+            email: _emailCtrl.text.trim(),
+            debugCode: result.debugCode,
+          ),
+        ),
       );
-    } else {
+    } on ApiException catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = _controller.errorMessage;
+        _error = e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = 'Something went wrong. Please try again.';
       });
     }
   }
@@ -70,7 +74,8 @@ class _LoginScreenState extends State<LoginScreen> {
           SafeArea(
             bottom: false,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -86,11 +91,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
                     Center(
                       child: Text(
-                        l10n.welcomeBack,
+                        l10n.forgotPasswordTitle,
                         style: const TextStyle(
                           fontFamily: 'Recoleta',
                           fontWeight: FontWeight.w900,
-                          fontSize: 38,
+                          fontSize: 34,
                           color: Color(0xFF44200B),
                         ),
                       ),
@@ -98,7 +103,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 6),
                     Center(
                       child: Text(
-                        l10n.signInToContinue,
+                        l10n.forgotPasswordSubtitle,
+                        textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 15,
                           color: Color(0xFF76310F),
@@ -107,54 +113,38 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 32),
                     _buildCard(
-                      child: Column(
-                        children: [
-                          _buildTextField(
-                            controller: _emailCtrl,
-                            label: l10n.emailLabel,
-                            icon: Icons.email_outlined,
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (v) {
-                              if (v == null || v.isEmpty) return l10n.validationEnterEmail;
-                              if (!v.contains('@')) return l10n.validationInvalidEmail;
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: _passwordCtrl,
-                            label: l10n.passwordLabel,
-                            icon: Icons.lock_outlined,
-                            obscureText: _obscurePassword,
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                                color: const Color(0xFF76310F),
-                              ),
-                              onPressed: () => setState(
-                                  () => _obscurePassword = !_obscurePassword),
-                            ),
-                            validator: (v) {
-                              if (v == null || v.isEmpty) return l10n.validationEnterPassword;
-                              return null;
-                            },
-                          ),
-                        ],
+                      child: _buildTextField(
+                        controller: _emailCtrl,
+                        label: l10n.emailLabel,
+                        icon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (v) {
+                          if (v == null || v.isEmpty) {
+                            return l10n.validationEnterEmail;
+                          }
+                          if (!v.contains('@')) {
+                            return l10n.validationInvalidEmail;
+                          }
+                          return null;
+                        },
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.center,
+                    if (_error != null) ...[
+                      const SizedBox(height: 12),
+                      _buildErrorBubble(_error!),
+                    ],
+                    const SizedBox(height: 24),
+                    _buildPrimaryButton(
+                      label: l10n.sendCodeButton,
+                      isLoading: _isLoading,
+                      onPressed: _sendCode,
+                    ),
+                    const SizedBox(height: 20),
+                    Center(
                       child: GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const ForgotPasswordScreen()),
-                        ),
+                        onTap: () => Navigator.pop(context),
                         child: Text(
-                          l10n.forgotPasswordLink,
+                          '← ${l10n.loginButton}',
                           style: const TextStyle(
                             color: Color(0xFFFF8D00),
                             fontWeight: FontWeight.bold,
@@ -164,42 +154,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 12),
-                      _buildErrorBubble(_error!),
-                    ],
-                    const SizedBox(height: 24),
-                    _buildPrimaryButton(
-                      label: l10n.loginButton,
-                      isLoading: _isLoading,
-                      onPressed: _login,
-                    ),
-                    const SizedBox(height: 20),
-                    Center(
-                      child: GestureDetector(
-                        onTap: () => Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                        ),
-                        child: RichText(
-                          text: TextSpan(
-                            text: l10n.noAccountQuestion,
-                            style: const TextStyle(color: Color(0xFF76310F), fontSize: 15),
-                            children: [
-                              TextSpan(
-                                text: l10n.registerLink,
-                                style: const TextStyle(
-                                  color: Color(0xFFFF8D00),
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
+                    SizedBox(
+                        height: MediaQuery.of(context).padding.bottom + 24),
                   ],
                 ),
               ),
@@ -211,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// ---------- Shared auth widgets ----------
+// ---------- Shared auth helpers ----------
 
 Widget _buildCard({required Widget child}) {
   return Container(
@@ -273,7 +229,8 @@ Widget _buildTextField({
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: Colors.redAccent, width: 2),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     ),
   );
 }
@@ -292,7 +249,8 @@ Widget _buildPrimaryButton({
         foregroundColor: const Color(0xFF44200B),
         disabledBackgroundColor: const Color(0xFFFF8D00).withOpacity(0.6),
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         textStyle: const TextStyle(
           fontFamily: 'Recoleta',
           fontWeight: FontWeight.w900,

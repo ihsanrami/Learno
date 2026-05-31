@@ -30,6 +30,17 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
+# DIAGNOSTIC: also write to debug.log so logs survive after the console closes
+_debug_file_handler = logging.FileHandler(
+    os.path.join(os.path.dirname(__file__), "..", "debug.log"),
+    mode="a",
+    encoding="utf-8",
+)
+_debug_file_handler.setLevel(logging.DEBUG)
+_debug_file_handler.setFormatter(
+    logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+)
+logging.getLogger().addHandler(_debug_file_handler)
 logger = logging.getLogger(__name__)
 
 _start_time = time.time()

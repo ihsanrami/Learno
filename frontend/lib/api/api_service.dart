@@ -48,6 +48,21 @@ class ApiService {
         .post(url, headers: _headers, body: jsonEncode(request.toJson()))
         .timeout(ApiConfig.lessonTimeout);
 
+    if (response.statusCode == 429) {
+      // Check for daily learning limit before throwing a generic error.
+      try {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        if (body['error_code'] == 'daily_limit_reached') {
+          throw const DailyLimitException();
+        }
+      } on DailyLimitException {
+        rethrow;
+      } catch (_) {
+        // JSON parse failed or unknown 429 — fall through to generic error
+      }
+      throw ApiException('Server error: ${response.statusCode}');
+    }
+
     if (response.statusCode != 200) {
       throw ApiException('Server error: ${response.statusCode}');
     }
@@ -171,6 +186,68 @@ class ApiService {
         .toList();
   }
 
+  static Future<ForgotPasswordResult> forgotPassword(String email) async {
+    final url =
+        Uri.parse('${ApiConfig.baseUrl}${ApiConfig.authForgotPassword}');
+    final response = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'email': email}),
+        )
+        .timeout(ApiConfig.connectionTimeout);
+    if (response.statusCode != 200) {
+      throw ApiException('Server error: ${response.statusCode}');
+    }
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    return ForgotPasswordResult(
+      message: body['message'] as String,
+      debugCode: body['debug_code'] as String?,
+    );
+  }
+
+  static Future<String> verifyResetCode(String email, String code) async {
+    final url =
+        Uri.parse('${ApiConfig.baseUrl}${ApiConfig.authVerifyResetCode}');
+    final response = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'email': email, 'code': code}),
+        )
+        .timeout(ApiConfig.connectionTimeout);
+    if (response.statusCode == 400) {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException(body['detail'] as String? ?? 'Invalid code');
+    }
+    if (response.statusCode != 200) {
+      throw ApiException('Server error: ${response.statusCode}');
+    }
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    return body['reset_token'] as String;
+  }
+
+  static Future<void> resetPassword(
+      String resetToken, String newPassword) async {
+    final url =
+        Uri.parse('${ApiConfig.baseUrl}${ApiConfig.authResetPassword}');
+    final response = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(
+              {'reset_token': resetToken, 'new_password': newPassword}),
+        )
+        .timeout(ApiConfig.connectionTimeout);
+    if (response.statusCode == 400) {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException(body['detail'] as String? ?? 'Reset failed');
+    }
+    if (response.statusCode != 204) {
+      throw ApiException('Server error: ${response.statusCode}');
+    }
+  }
+
   static int _gradeToInt(Grade grade) {
     switch (grade) {
       case Grade.kindergarten: return 0;
@@ -188,4 +265,8 @@ class ApiException implements Exception {
 
   @override
   String toString() => message;
+}
+
+class DailyLimitException implements Exception {
+  const DailyLimitException();
 }
